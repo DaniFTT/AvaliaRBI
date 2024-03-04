@@ -1,0 +1,571 @@
+﻿@using AvaliaRBI.Shared.Extensions;
+@using AvaliaRBI.Shared.Functions;
+@using AvaliaRBI._2___Application;
+@using AvaliaRBI._3___Domain;
+@using AvaliaRBI._3___Domain.Enum;
+@using AvaliaRBI._3___Domain.Models;
+@using FluentValidation;
+@inject IDialogService DialogService
+@inject IJSRuntime JSRuntime
+@inject ISnackbar Snackbar
+
+<MudDialog Style="padding: 0.5rem 1rem 0rem 1rem; max-height: 90vh;">
+    <TitleContent>
+        <MudGrid Style="padding: 0.5rem 0 0rem 0.7rem">
+
+            @if (isUpdate && !isReadonly)
+            {
+                <MudText Typo="Typo.h6">
+                    Edição do Critério de Avaliação: @collection.Name
+                </MudText>
+            }
+            else if (!isUpdate && !isReadonly)
+            {
+                <MudText Typo="Typo.h6">
+                    Cadastro de Critério de Avaliação
+                </MudText>
+            }
+            else if (isReadonly)
+            {
+                <MudText Typo="Typo.h6">
+                    Detalhes do Critério de Avaliação: @collection.Name
+                </MudText>
+            }
+
+        </MudGrid>
+    </TitleContent>
+    <DialogContent>
+        <MudForm Model="@collection" @ref="@form" Validation="collectionValidator.ValidateValue" ValidationDelay="0" ReadOnly="isReadonly">
+
+            <div class="d-flex" style="gap: 1rem; margin-bottom:1rem">
+                <MudTextField T="string" @bind-Value="@collection.Name" For="@(() => collection.Name)" Label="Nome" Immediate="true" Margin="Margin.Dense" />
+                <MudSelect T="Department" MultiSelection="true" ToStringFunc="@converter" SelectAll="true" SelectAllText="Selecionar todos" @bind-Value="@value" @bind-SelectedValues="@departmentsSelected" MultiSelectionTextFunc="@(new Func<List<string>, string>(GetMultiSelectionText))" Label="Departamentos" AnchorOrigin="Origin.BottomCenter" Clearable="!isReadonly" Dense="true" Margin="Margin.Dense">
+                    @foreach (var department in departments)
+                    {
+                        <MudSelectItem T="Department" Value="@department" />
+                    }
+                </MudSelect>
+            </div>
+
+            <MudTextField T="string"  Style="margin-bottom: 1rem" @bind-Value="@collection.Description" For="@(() => collection.Description)" Label="Descrição" Immediate="true" Margin="Margin.Dense" />
+
+
+            @if (!isReadonly)
+            {
+
+                <MudText Typo="Typo.body1" Style="margin-top: 1rem">
+                    Aspectos de Avaliação
+                </MudText>
+                <MudText Typo="Typo.overline" Style="margin-bottom: 2rem">
+                    Cadastre abaixo seus Aspectos de Avaliação, juntamente com seus critérios e limites
+                </MudText>
+            }
+            else
+            {
+                <MudText Typo="Typo.body1" Style="margin-top: 1.5rem; margin-bottom: 0.6rem">
+                    Aspectos de Avaliação
+                </MudText>
+            }
+
+            <MudDynamicTabs @ref="@DynamicTabs" @bind-ActivePanelIndex="@UserIndex"
+                            AddTab="@(!isReadonly ? AddTabCallback : null)" CloseTab="@(!isReadonly ? CloseTabCallback : null)"
+                            AddIconToolTip="@(!isReadonly ? "Clique para adicionar um novo Aspecto" : string.Empty)" CloseIconToolTip="Excluir Aspecto. Todos os dados serão perdidos"                              
+                            PanelClass="px-8 pb-4 pt-2" MaxHeight="600" Elevation="4" Rounded ApplyEffectsToContainer>
+                @for (int i = 0; i < aspects.Count; i++)
+                {
+                    var aspect = aspects[i];
+                    <MudTabPanel ID="@i"  Style="font-size: 0.8rem;" Text="@aspect.Name" ShowCloseIcon="!isReadonly" >
+                        <div class="d-flex gap-5">
+                            <MudTextField T="string" @bind-Value="aspect.Name" Label="Nome" Immediate="true" Margin="Margin.Dense" Required RequiredError="Informe o Nome" />
+                            <MudSelect T="AssessmentType?" @bind-Value="aspect.AssesmentType" Immediate="true" Label="Recorrência" AnchorOrigin="Origin.BottomCenter" Clearable="!isReadonly" Required RequiredError="Informe a Recorrência" Margin="Margin.Dense" Dense>
+                                <MudSelectItem T="AssessmentType?" Value="@(AssessmentType.MonthlyAssessment)" >
+                                    Mensal
+                                </MudSelectItem>
+                                 <MudSelectItem  T="AssessmentType?" Value="@(AssessmentType.QuarterlyAssessment)" >
+                                    Trimestral
+                                </MudSelectItem>
+                            </MudSelect>
+                        </div>
+                        <MudTextField T="string" @bind-Value="aspect.Description" Label="Descrição" Immediate="true" Margin="Margin.Dense" />
+
+                        <MudTable Style="margin-top: 2rem; margin-bottom:1.5rem" Elevation="2" Items="@aspect.Criteria" Dense="true" Hover="true" ReadOnly="false" CanCancelEdit="true"
+                            @bind-SelectedItem="selectedCriteria" CommitEditTooltip="Salvar edição" FixedHeader="true" 
+                                    OnPreviewEditClick="OnClickEditCriteria"
+                                    RowEditPreview="BackupItem" RowEditCancel="ResetItemToOriginalValues"
+                                    RowEditCommit="ItemHasBeenCommitted" IsEditRowSwitchingBlocked="true" ApplyButtonPosition="TableApplyButtonPosition.End" EditButtonPosition="TableEditButtonPosition.End" EditTrigger="!isReadonly ? TableEditTrigger.RowClick : TableEditTrigger.EditButton">
+                            <ToolBarContent>
+                            <MudGrid Style="align-items: center;">
+                                    <MudItem sm="9" Style="padding: 2rem 0rem 2rem 0rem;">
+                                        <MudText Typo="Typo.body1">Critérios</MudText>
+                                        @if (!isReadonly)
+                                        {
+                                            <MudText Typo="Typo.caption">Clique em 'Adicionar Critério' e preencha as informações</MudText>
+                                        }
+
+                                    </MudItem>
+                            <MudItem sm="3" Style=" padding: 2rem 0rem 2rem 0rem; text-align: end;">
+
+                                        @if (!isReadonly)
+                                        {
+                                            <MudButton OnClick="() => AddCriteriaOnAspect(aspect)" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small">
+                                                Adicionar Critério
+                                            </MudButton>
+                                        }
+
+                                    </MudItem>
+                                </MudGrid>
+                            </ToolBarContent>
+                            <ColGroup>
+                                <col style="width:40%;" />
+                                <col style="width:25%;" />
+                                <col style="width:10%;" />
+                                <col style="width:24%;" />
+                                <col style="width:1%;" />
+                    </ColGroup>
+                            <HeaderContent>
+                                <MudTh><MudTableSortLabel SortBy="new Func<AssessmentCriteria, object>(x=>x.Name)">Nome</MudTableSortLabel></MudTh>
+                                <MudTh><MudTableSortLabel SortBy="new Func<AssessmentCriteria, object>(x=>x.CriteriaType)">Tipo do Critério</MudTableSortLabel></MudTh>
+                                <MudTh><MudTableSortLabel SortBy="new Func<AssessmentCriteria, object>(x=>x.IsPositive)">Tendência</MudTableSortLabel></MudTh>
+                                <MudTh><MudTableSortLabel SortBy="new Func<AssessmentCriteria, object>(x=>x.GetLimitValue())">Limite</MudTableSortLabel></MudTh>
+                                <MudTh></MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Name" Style="padding-bottom:0.2rem">@context.Name</MudTd>
+                                <MudTd DataLabel="CriteriaType" Style="padding-bottom:0.2rem">@(context.CriteriaType.HasValue ? @context.CriteriaType.Value.GetDescription() : string.Empty)</MudTd>
+                                    <MudTd DataLabel="IsPositive" Style="padding-bottom:0.2rem">@(context.IsPositive ? "Positiva" : "Negativa")</MudTd>
+                                    <MudTd DataLabel="LimitValue" Style="padding-bottom:0.2rem">@context.GetLimitValue()</MudTd>
+                                <MudTd DataLabel="Action" Style="padding-bottom:0.2rem">
+                                    @if (!isReadonly)
+                                    {
+                                        <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Class="pa-0" Title="Excluir" OnClick="@(() => DeleteCriteriaFromAspect(aspect, @context))" />
+                                    }
+                                </MudTd>
+                            </RowTemplate>
+                            <RowEditingTemplate>
+                                <MudTd DataLabel="Name">
+                                    @if (isReadonly)
+                                    {
+                                        <MudText Typo="Typo.body2">@context.Name</MudText>
+                                    }
+                                    else
+                                    {
+                                        <MudTextField Label="Nome" @bind-Value="@context.Name" Margin="Margin.Dense" Required RequiredError="Informe um Nome"/>
+                                    }
+                                </MudTd>
+                                <MudTd DataLabel="CriteriaType">
+                                    @if (isReadonly)
+                                    {
+                                        <MudText Typo="Typo.body2">@context.CriteriaType.GetDescription()</MudText>
+                                    }
+                                    else
+                                    {
+                                        <MudSelect T="CriteriaType?" Value="context.CriteriaType" ValueChanged="@((v) => OnCriteriaTypeChanged(context, v))" Label="Tipo" Variant="Variant.Text" Clearable AnchorOrigin="Origin.BottomCenter" Margin="Margin.Dense" Dense="true"
+                                                      Required RequiredError="Selecione o Tipo">
+                                            <MudSelectItem T="CriteriaType?" Value="@(CriteriaType.Integer)">
+                                            @(CriteriaType.Integer.GetDescription())
+                                            </MudSelectItem>
+                                            <MudSelectItem T="CriteriaType?" Value="@(CriteriaType.Decimal)">
+                                                @(CriteriaType.Decimal.GetDescription())
+                                            </MudSelectItem>
+                                            <MudSelectItem T="CriteriaType?" Value="@(CriteriaType.Percentage)">
+                                                @(CriteriaType.Percentage.GetDescription())
+                                            </MudSelectItem>
+                                            <MudSelectItem T="CriteriaType?" Value="@(CriteriaType.Time)">
+                                                @(CriteriaType.Time.GetDescription())
+                                            </MudSelectItem>
+                                        </MudSelect>
+                                    }
+
+                                </MudTd>
+                                <MudTd DataLabel="IsPositive">
+                                    @if (isReadonly)
+                                    {
+                                        <MudText Typo="Typo.body2">>@(context.IsPositive ? "Positiva" : "Negativa")</MudText>
+                                    }
+                                    else
+                                    {
+                                        <MudSelect T="bool" Label="Tendência" @bind-Value="@context.IsPositive" Variant="Variant.Text" AnchorOrigin="Origin.BottomCenter" Margin="Margin.Dense" Dense="true"
+                                                      Required RequiredError="Selecione a Tendência">
+                                            <MudSelectItem T="bool" Value="true">
+                                                Positiva
+                                            </MudSelectItem>
+                                            <MudSelectItem T="bool" Value="false">
+                                                Negativa
+                                            </MudSelectItem>
+                                        </MudSelect>
+                                    }
+
+                                </MudTd>
+                                <MudTd DataLabel="LimitValue">
+                                    @if (isReadonly)
+                                    {
+                                        <MudText Typo="Typo.body2">@context.GetLimitValue()</MudText>
+                                    }
+                                    else
+                                    {
+                                        @if (context.CriteriaType == null || context.CriteriaType == CriteriaType.None)
+                                        {
+                                            <MudTextField Label="Limite" Value="@("Selecione o Tipo")" Disabled="true" Margin="Margin.Dense"
+                                                                    Required RequiredError="Informe o Limite" />
+                                        }
+                                        else if (context.CriteriaType == CriteriaType.Integer)
+                                        {
+                                            <MudNumericField Label="Limite" @bind-Value="@context.LimitValueCriteria.ValueInt" Variant="Variant.Text" Margin="Margin.Dense" Required RequiredError="Informe o Limite" Validation="@(new Func<int?, IEnumerable<string>>(ValidateLimitValue))" Immediate />
+                                        }
+                                        else if (context.CriteriaType == CriteriaType.Decimal)
+                                        {
+                                            <MudNumericField Label="Limite" @bind-Value="@context.LimitValueCriteria.ValueDecimal" Format="F2" Required RequiredError="Informe o Limite" ErrorText="Valor Inválido" Margin="Margin.Dense" Validation="@(new Func<double?, IEnumerable<string>>(ValidateLimitValue))" Immediate />
+                                        }
+                                        else if (context.CriteriaType == CriteriaType.Percentage)
+                                        {
+                                            <MudNumericField Label="Limite" @bind-Value="@context.LimitValueCriteria.ValuePercentage" Format="F2" Adornment="Adornment.End" AdornmentText="%" Required RequiredError="Informe o Limite" Margin="Margin.Dense" Validation="@(new Func<double?, IEnumerable<string>>(ValidateLimitValue))" Immediate/>
+                                        }
+                                        else if (context.CriteriaType == CriteriaType.Time)
+                                        {
+                                            <MudTextField Label="Limite" @bind-Value="@context.LimitValueCriteria.ValueTime"  Mask="@(new PatternMask("00:00"))" Required RequiredError="Informe o Limite" Margin="Margin.Dense" Validation="@(new Func<string, IEnumerable<string>>(ValidateLimitValue))" Immediate/>
+                                        }
+                                    }
+
+                                </MudTd>
+                                <MudTd DataLabel="Action">
+                                </MudTd>
+                            </RowEditingTemplate>
+                            <EditButtonContent Context="button">
+                                @if (!isReadonly)
+                                {
+                                    <MudIconButton @ref="editButton" Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" Class="pa-0" OnClick="@button.ButtonAction" Disabled="@button.ButtonDisabled" Title="Editar" />
+                                }
+                            </EditButtonContent>
+                        </MudTable>
+                    </MudTabPanel>
+                }
+            </MudDynamicTabs>
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+
+        <MudElement HtmlTag="div" Style="padding: 15px 10px 10px 0; margin-top: 1rem">
+
+            @if (!isReadonly)
+            {
+                <MudButton OnClick="Cancel">Cancelar</MudButton>
+                <MudButton Color="Color.Success" OnClick="SaveCollection">Salvar</MudButton>
+            }
+
+            @if (isReadonly)
+            {
+                <MudButton OnClick="Cancel">Fechar</MudButton>
+            }
+        </MudElement>
+
+    </DialogActions>
+
+</MudDialog>
+
+@code {
+    MudForm form;
+
+    [Inject] AssessmentCollectionService AssessmentCollectionService { get; set; }
+    [Inject] DepartmentService DepartmentService { get; set; }
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public AssessmentCollection collection { get; set; } = new AssessmentCollection();
+    [Parameter] public bool isUpdate { get; set; }
+    [Parameter] public bool isReadonly { get; set; }
+
+    private MudIconButton editButton;
+    private List<AssessmentAspect> aspects = new List<AssessmentAspect>();
+    private static List<Department> departments = new List<Department>();
+
+    private AssessmentCriteria selectedCriteria = null;
+    private AssessmentCriteria elementBeforeEdit;
+
+    AssessmentCollectionValidator collectionValidator = null;
+
+    public MudDynamicTabs DynamicTabs;
+    public int UserIndex;
+    bool _stateHasChanged;
+    bool _showCloseIcon = false;
+
+    private Department value { get; set; } = new Department();
+    private IEnumerable<Department> departmentsSelected { get; set; } = new HashSet<Department>();
+
+    private IEnumerable<string> ValidateLimitValue(int? limit)
+    {
+        if (limit == null)
+        {
+            yield return "O limite é obrigatório";
+            yield break;
+        }
+
+        if(limit <= 0)
+        {
+            yield return "O limite deve ser maior que 0";
+        }
+    }
+
+    private IEnumerable<string> ValidateLimitValue(double? limit)
+    {
+        if (limit == null)
+        {
+            yield return "O limite é obrigatório";
+            yield break;
+        }
+
+        if (limit <= 0)
+        {
+            yield return "O limite deve ser maior que 0";
+        }
+    }
+
+    private IEnumerable<string> ValidateLimitValue(string time)
+    {
+        if (string.IsNullOrWhiteSpace(time))
+        {
+            yield return "O limite é obrigatório";
+            yield break;
+        }
+
+        if (!DateTime.TryParseExact(time, "HH:mm", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var teste))
+        {
+            yield return "O Tempo Limite informado é inválido";
+        }
+    }
+
+
+    Func<Department, string> converter = p => p?.Name;
+
+    private string GetMultiSelectionText(List<string> selectedValues)
+    {
+        if (selectedValues.Count == departments.Count)
+            return "Todos departamentos selecionados";
+
+        if (selectedValues.Count <= 4)
+            return string.Join(", ", selectedValues);
+
+        return $"{selectedValues.Count} departamentos selecionados";
+    }
+
+    private void DeleteCriteriaFromAspect(AssessmentAspect aspect, AssessmentCriteria criteria)
+    {
+        aspect.Criteria.Remove(criteria);
+    }
+
+    private string helperTextCriteria = "Clique aqui para editar o criterio";
+    private void AddCriteriaOnAspect(AssessmentAspect aspect)
+    {
+        var criteria = new AssessmentCriteria()
+        {
+            Name = helperTextCriteria,
+        };
+        aspect.Criteria.Add(criteria);
+        selectedCriteria = criteria;
+    }
+
+    private void OnClickEditCriteria(object element)
+    {
+        selectedCriteria.CriteriaType = ((AssessmentCriteria)element).CriteriaType;
+    }
+
+    private void BackupItem(object element)
+    {
+        if (((AssessmentCriteria)element).Name == helperTextCriteria)
+            ((AssessmentCriteria)element).Name = string.Empty;
+
+        elementBeforeEdit = new()
+        {
+            Id = ((AssessmentCriteria)element).Id,
+            Name = ((AssessmentCriteria)element).Name,
+            CriteriaType = ((AssessmentCriteria)element).CriteriaType,
+            IsPositive = ((AssessmentCriteria)element).IsPositive,
+            AspectId = ((AssessmentCriteria)element).AspectId,
+        };
+    }
+
+    private void ResetItemToOriginalValues(object element)
+    {
+        ((AssessmentCriteria)element).Id = elementBeforeEdit.Id;
+        ((AssessmentCriteria)element).Name = elementBeforeEdit.Name;
+        ((AssessmentCriteria)element).CriteriaType = elementBeforeEdit.CriteriaType;
+        ((AssessmentCriteria)element).IsPositive = elementBeforeEdit.IsPositive;
+        ((AssessmentCriteria)element).AspectId = elementBeforeEdit.AspectId;
+
+        if (string.IsNullOrEmpty(((AssessmentCriteria)element).Name))
+            ((AssessmentCriteria)element).Name = helperTextCriteria;
+    }
+
+    private void ItemHasBeenCommitted(object element)
+    {
+
+    }
+
+    private int LimitValueInt;
+    private double LimitValueDecimal;
+    private double LimitValuePercentage;
+    private int LimitValueTime;
+
+
+    public void OnCriteriaTypeChanged(AssessmentCriteria criteria, CriteriaType? criteriaType)
+    {
+        criteria.CriteriaType = criteriaType;
+    }
+
+    public async Task AddTab(int id)
+    {
+        try
+        {
+            aspects.Add(new AssessmentAspect());
+            UserIndex = aspects.Count - 1;
+            _stateHasChanged = true;
+        }
+        catch (Exception e)
+        {
+            await DialogService.ShowError("Houve um erro ao tentarmos Adicionar um Aspecto! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+
+            throw;
+        }
+
+    }
+
+    public async Task RemoveTab(int id)
+    {
+        try
+        {
+            var tabView = aspects[id];
+            if (tabView is not null)
+            {
+                aspects.Remove(tabView);
+                _stateHasChanged = true;
+            }
+        }
+        catch (Exception e)
+        {
+            await DialogService.ShowError("Houve um erro ao tentarmos Remover esse Aspecto! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+
+            throw;
+        }
+
+    }
+
+    async Task AddTabCallback() => AddTab(aspects.Count + 1);
+    async Task CloseTabCallback(MudTabPanel panel) => await RemoveTab((int)panel.ID);
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private void AddAspect()
+    {
+        aspects.Add(new AssessmentAspect());
+    }
+
+    private void RemoveAspect(AssessmentAspect aspect)
+    {
+        aspects.Remove(aspect);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        collectionValidator = new(AssessmentCollectionService);
+        departments = (await DepartmentService.GetAll()).ToList();
+
+        if ((isUpdate || isReadonly) && collection.AssessmentAspects.Any())
+        {
+            aspects = collection.AssessmentAspects.ToList();
+            departmentsSelected = departments.Where(d => collection.Departments.Any(cd => cd.Id == d.Id)).ToHashSet();        
+        }
+    }
+
+    private async Task SaveCollection()
+    {
+        await form.Validate();
+        if (!form.IsValid)
+            return;
+
+        var currentCollection = await AssessmentCollectionService.GetByName(collection.Name);
+        if (currentCollection != null && currentCollection.Id != collection.Id)
+        {
+            await DialogService.ShowError("Já existe um registro cadastrado com este nome.");
+            return;
+        }
+
+        if(!departmentsSelected.Any())
+        {
+            await DialogService.ShowError($"Selecione pelo menos 1 departamento");
+            return;
+        }
+
+        collection.AssessmentAspects = aspects.ToList();
+        collection.Departments = departmentsSelected.ToList();
+        var newCollection = new AssessmentCollection(collection);
+
+        if(!newCollection.AssessmentAspects.Any())
+        {
+            await DialogService.ShowError($"Necessário criar pelo menos 1 Aspecto");
+            return;
+        }
+
+        var invalidAspects = newCollection.AssessmentAspects.Where(a => !a.Criteria.Any()).ToArray();
+        if (invalidAspects.Any())
+        {
+            await DialogService.ShowError($"Os seguintes Aspcetos estão sem Critérios definidos: \n\n{string.Join(",\n", invalidAspects.Select(a => a.Name))}");
+            return;
+        }
+
+        var invalidCriterias = newCollection.AssessmentAspects.Where(a => a.Criteria.Any(c => string.IsNullOrEmpty(c.Name) || c.Name == helperTextCriteria || !c.IsValidLimitValue())).ToArray();
+        if (invalidCriterias.Any())
+        {
+            await DialogService.ShowError($"Os seguintes Aspcetos estão com valores de Critérios indefinidos: \n\n{string.Join(",\n", invalidCriterias.Select(a => a.Name))}");
+            return;
+        }
+
+
+        if (isUpdate)
+        {
+            var updateResult = await AssessmentCollectionService.Update(newCollection.Id, newCollection);
+            if (updateResult.IsSuccess)
+            {
+
+                Snackbar.Add("Critérios Atualizados!", MudBlazor.Severity.Success);
+                MudDialog.Close(DialogResult.Ok(newCollection));
+                return;
+            }
+
+            await DialogService.ShowError("Não foi possivel atualizar esses Critérios! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+            return;
+        }
+
+        var createResult = await AssessmentCollectionService.Insert(newCollection);
+        if (createResult.IsSuccess)
+        {
+            Snackbar.Add("Critérios Cadastrados!", MudBlazor.Severity.Success);
+            MudDialog.Close(DialogResult.Ok(newCollection));
+
+            return;
+        }
+
+        await DialogService.ShowError("Não foi possivel criar esses Critérios! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+    }
+
+    internal class AssessmentCollectionValidator : AbstractValidator<AssessmentCollection>
+    {
+        public AssessmentCollectionValidator(AssessmentCollectionService assessmentCollectionService)
+        {
+            RuleFor(p => p.Name)
+                .NotEmpty().WithMessage("O Nome é obrigatório")
+                .MaximumLength(255).WithMessage("O Nome deve conter no máximo 150 caracteres");
+        }
+
+        public Func<object, string, Task<IEnumerable<string>>> ValidateValue => async (model, propertyName) =>
+        {
+            var result = await ValidateAsync(ValidationContext<AssessmentCollection>.CreateWithOptions((AssessmentCollection)model, x => x.IncludeProperties(propertyName)));
+            if (result.IsValid)
+                return Array.Empty<string>();
+
+            return result.Errors.Select(e => e.ErrorMessage);
+        };
+    }
+}

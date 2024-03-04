@@ -1,0 +1,44 @@
+﻿﻿<MudDialog>
+    <DialogContent>
+        @if (Errors.Length == 1)
+        {
+            <MudText>@Errors[0]</MudText>
+        }
+        else
+        {
+            @foreach (string erro in Errors)
+            {
+                @if (string.IsNullOrEmpty(erro))
+                {
+                    <br />
+                }
+                else
+                {
+                    <MudText>@erro</MudText>
+                }
+            }
+        }
+
+        <br />
+    </DialogContent>
+    <DialogActions>
+        @if (IsQuestion)
+        {
+            <MudButton OnClick="Cancel">Cancelar</MudButton>
+        }
+        <MudButton Style="margin-bottom: 5px" Color="@Color" Variant="Variant.Filled" OnClick="Submit">@(IsQuestion ? "Sim" : "Ok")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public string[] Errors { get; set; }
+
+    [Parameter] public Color Color { get; set; }
+    [Parameter] public bool IsQuestion { get; set; }
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
+
+    private void Cancel() => MudDialog.Cancel();
+}

@@ -1,0 +1,140 @@
+﻿@using AvaliaRBI.Shared.Functions;
+@using AvaliaRBI._2___Application;
+@using AvaliaRBI._3___Domain;
+@using FluentValidation;
+@inject IDialogService DialogService
+
+@inject ISnackbar Snackbar
+
+<MudDialog Style="padding: 0.5rem 1rem 0.5rem 1rem">
+    <TitleContent>
+        <MudGrid Style="padding: 1rem 0 1rem 0.7rem">
+
+            @if (isUpdate && !isReadonly)
+            {
+                <MudText Typo="Typo.h6">
+                    Edição de Setor
+                </MudText>
+            }
+            else if (!isUpdate && !isReadonly)
+            {
+                <MudText Typo="Typo.h6">
+                    Cadastro de Setor
+                </MudText>
+            }
+            else if (isReadonly)
+            {
+                <MudText Typo="Typo.h6">
+                    Detalhes do Setor
+                </MudText>
+            }
+
+        </MudGrid>
+    </TitleContent>
+    <DialogContent>
+        <MudForm Model="@sector" @ref="@form" Validation="sectorValidator.ValidateValue" ValidationDelay="0" ReadOnly="isReadonly">
+            <MudTextField T="string" @bind-Value="@sector.Name" For="@(() => sector.Name)" Label="Nome" Immediate="true" />
+            <MudTextField T="string" @bind-Value="@sector.Description" For="@(() => sector.Description)" Label="Descrição" Immediate="true" AutoGrow />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudElement HtmlTag="div" Style="padding: 15px 10px 10px 0;">
+            @if (!isReadonly)
+            {
+                <MudButton OnClick="Cancel">Cancelar</MudButton>
+                <MudButton Color="Color.Success" OnClick="SaveSector">Salvar</MudButton>
+            }
+            @if (isReadonly)
+            {
+                <MudButton OnClick="Cancel">Fechar</MudButton>
+            }
+        </MudElement>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    MudForm form;
+
+    [Inject] SectorService SectorService { get; set; }
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public Sector sector { get; set; } = new Sector();
+    [Parameter] public bool isUpdate { get; set; }
+    [Parameter] public bool isReadonly { get; set; }
+
+    SectorCommandValidator sectorValidator = null;
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    protected override void OnInitialized()
+    {
+        sectorValidator = new(SectorService);
+    }
+
+    private async Task SaveSector()
+    {
+        await form.Validate();
+        if (!form.IsValid)
+            return;
+
+        var currentSector = await SectorService.GetByName(sector.Name);
+        if (currentSector != null && currentSector.Id != sector.Id)
+        {
+            await DialogService.ShowError("Já existe um registro cadastrado com este nome.");
+            return;
+        }
+
+        var newSector = new Sector(sector);
+        if (isUpdate)
+        {
+            var updateResult = await SectorService.Update(newSector.Id, newSector);
+            if (updateResult.IsSuccess)
+            {
+                Snackbar.Add("Setor Atualizado!", MudBlazor.Severity.Success);
+                MudDialog.Close(DialogResult.Ok(newSector));
+                return;
+            }
+
+            await DialogService.ShowError("Não foi possivel atualizar esse Setor! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+
+            return;
+        }
+
+        var createResult = await SectorService.Insert(newSector);
+        if (createResult.IsSuccess)
+        {
+            Snackbar.Add("Setor Cadastrado!", MudBlazor.Severity.Success);
+            MudDialog.Close(DialogResult.Ok(newSector));
+
+            return;
+        }
+
+        await DialogService.ShowError("Não foi possivel criar esse Setor! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+    }
+
+    internal class SectorCommandValidator : AbstractValidator<Sector>
+    {
+        public SectorCommandValidator(SectorService sectorService)
+        {
+            RuleFor(p => p.Name)
+                .NotEmpty().WithMessage("O Nome é obrigatório")
+                .MaximumLength(255).WithMessage("O Nome deve conter no máximo 150 caracteres");
+
+            RuleFor(p => p.Description)
+                .MaximumLength(800).WithMessage("A Descrição deve conter no máximo 800 caracteres");
+        }
+
+        public Func<object, string, Task<IEnumerable<string>>> ValidateValue => async (model, propertyName) =>
+        {
+            var result = await ValidateAsync(ValidationContext<Sector>.CreateWithOptions((Sector)model, x => x.IncludeProperties(propertyName)));
+            if (result.IsValid)
+                return Array.Empty<string>();
+
+            return result.Errors.Select(e => e.ErrorMessage);
+        };
+    }
+}

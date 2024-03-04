@@ -1,0 +1,805 @@
+﻿@using Ardalis.Result;
+@using AvaliaRBI.Shared.Functions;
+@using AvaliaRBI._1___Presentation.Employees.Dialogs;
+@using AvaliaRBI._2___Application;
+@using AvaliaRBI._3___Domain;
+@using AvaliaRBI._3___Domain.Enum;
+@using AvaliaRBI._3___Domain.Models;
+@using FluentValidation;
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar;
+
+<style>
+    .limitValueField .mud-input-control {
+        width: 180px;
+    }
+</style>
+
+<MudCard Style="width: 100%; min-height:70vh; padding: 1rem 0rem 1rem 0rem;">
+
+    <MudGrid Style="padding: 0rem 1rem;">
+        <MudItem xs="6" Style="text-align: right; align-self: center; display:inline-flex">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Color="Color.Primary" aria-label="goback" Style="font-size: 2rem;" OnClick="GoBack" />
+            <MudText Typo="Typo.h6" Style="align-self: center;padding-left: 1rem;">@(IsReadonly ? "Detalhes" : (AssessmentId.HasValue ? "Edição" : "Criação")) da Avaliação</MudText>
+        </MudItem>
+
+        <MudItem xs="6" Style="text-align: right; align-self: center;  padding-right: 2rem;">
+            @if (IsEditable && !IsClosed)
+            { 
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Style="width: 160px; margin-right: 2rem" Size="Size.Small" OnClick="async () => await SaveScratch()">Salvar Rascunho</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Style="width: 180px" Size="Size.Small"  OnClick="async () => await SaveConfirmation()">Concluir Avaliação</MudButton>
+            }
+            @if (!IsReadonly && IsClosed)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Style="width: 180px; margin-right: 2rem;" Size="Size.Small" OnClick="async () => await OpenAssessment()">Reabrir Avaliação</MudButton>
+                <MudChip Label="true" Color="Color.Success" Size="Size.Small" Variant="Variant.Outlined">Avaliação Concluida em @(assessment.ClosedDate.HasValue ? assessment.ClosedDate.Value.Date.ToString("dd/MM/yyyy") : string.Empty)</MudChip>
+            }
+
+            @if (IsReadonly && IsClosed)
+            {
+                
+                <MudButton Disabled="@_processingDownloadAll" OnClick="async () =>
+                    {
+                        var result = !_processingDownloadAll ? await DownloadAllAssessments() : await VoidButton();
+                    }" Variant="Variant.Filled" Color="Color.Primary" Style="width: 200px;  margin-right: 2rem;" Size="MudBlazor.Size.Small">
+                    @if (_processingDownloadAll)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" title="Baixando Avaliações..." />
+                    }
+                    else
+                    {
+                        <MudText Style="font-size: 0.9rem">Baixar Avaliações</MudText>
+                    }
+                </MudButton>
+
+@*                <MudButton Disabled="@_processingSendAssessments" OnClick="async () =>
+                    {
+                        var result = !_processingSendAssessments ? await SendAllAssessments() : await VoidButton();
+                    }" Variant="Variant.Filled" Color="Color.Primary" Style="width: 200px;  margin-right: 2rem;" Size="MudBlazor.Size.Small">
+                    @if (_processingSendAssessments)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" title="Enviando Avaliações..." />
+                    }
+                    else
+                    {
+                        <MudText Style="font-size: 0.9rem">Enviar Avaliações</MudText>
+                    }
+                </MudButton>*@
+
+
+                <MudChip Label="true" Color="Color.Success" Size="Size.Small" Variant="Variant.Outlined" >Avaliação Concluida em @(assessment.ClosedDate.HasValue ? assessment.ClosedDate.Value.Date.ToString("dd/MM/yyyy") : string.Empty)</MudChip>
+            }
+            @if (IsReadonly && !IsClosed)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Style="width: 180px; margin-right: 2rem" Size="Size.Small" OnClick="async () => await EditAssesment()">Editar Avaliação</MudButton>
+                <MudChip Label="true" Color="Color.Default" Size="Size.Small" Variant="Variant.Outlined">Avaliação em andamento</MudChip>
+            }
+        </MudItem>
+        
+        <MudItem xs="12">
+
+            <MudForm Model="@assessment" @ref="@form" Validation="monthlyAssessmentValidator.ValidateValue" ValidationDelay="0" ReadOnly="!IsEditable">
+
+                <div class="d-flex" style="gap: 2rem;">
+
+                    <MudTextField T="string" @bind-Value="@assessment.Responsible" For="@(() => assessment.Responsible)" Label="Responsável" Immediate="true" Margin="Margin.Dense" />
+                    <MudDatePicker Label="Competência da Avaliação" For="@(() => assessment.ReferenceDate)" Date="assessment.ReferenceDate" DateChanged="OnReferenceDateChanged" OpenTo="OpenTo.Year" FixDay="1" DateFormat="MM/yyyy" Margin="Margin.Dense" />
+                    <MudTextField T="string" @bind-Value="@assessment.Description" For="@(() => assessment.Description)" Label="Descrição" Immediate="true" Margin="Margin.Dense" AutoGrow />
+                </div>
+
+                @if (showDepartments)
+                {
+                    <div class="d-flex" style="margin-top: 2rem; align-items: center">
+                        <MudText Typo="Typo.body1" Style="font-weight: 500; font-size: 1.1rem; width: 75%;">
+                            Departamentos
+                        </MudText>
+
+                        @if (IsEditable){
+                            <MudText Typo="Typo.body1" Style="font-size: 0.9rem;width: 10%; text-align: right; margin-top: 1rem; padding-right: 1rem;">Ordernar Por: </MudText>
+                            <MudSelect Dense="true" Margin="Margin.Dense"  T="int" Style="font-size: 0.5rem" Value="@assessment.OrderByDepartment" ValueChanged="OrderDepartmentsChanged" Variant="Variant.Text">
+                                <MudSelectItem Value="0">Nome</MudSelectItem>
+                                <MudSelectItem Value="1">Quantidade de Funcionários</MudSelectItem>
+                            </MudSelect>
+                        }
+
+                    </div>
+
+                    <MudExpansionPanels MultiExpansion="true" DisableBorders Elevation="4" Dense="true" DisableGutters="true" Class="mt-2">
+
+                    @for (int i = 0; i < assessmentModels.Count; i++)
+                    {
+                        var assessmentModel = assessmentModels[i];
+
+                        var department = assessmentModel.Department;
+                        var employees = assessmentModel.Employees;
+
+                        <MudExpansionPanel Style="font-size: 0.8rem; margin-bottom:0.5rem">
+                            <TitleContent>
+                                <div class="d-flex">
+                                    <MudText Typo="Typo.body1" Style="    font-weight: 400;">@(department.Name)</MudText>
+                                </div>
+                            </TitleContent>
+                            <ChildContent>
+
+                                  
+                                <div style="padding:0rem 1.5rem 1rem 1.5rem;">
+                                    @if(!employees.Any())
+                                    {                                                               
+                                        <MudText Typo="Typo.body1" Style="padding-bottom: 0;font-size: 0.9rem;font-weight: 400;">
+                                            Nenhum Funcionário Encontrado!
+                                        </MudText>
+                                        <MudText Typo="Typo.caption" Style="margin-bottom: 2rem; font-size: 0.7rem;">
+                                            Não há nenhum Funcionário Do Departamento @(department.Name) cadastrado ou admitido antes dessa Competência...
+                                            </MudText>
+                                        }
+                                    else
+                                    {
+                                        @if (!IsReadonly)
+                                        {
+                                            <MudText Typo="Typo.body1" Style="padding-bottom: 0;font-size: 0.9rem;font-weight: 400;">
+                                                Aspectos de Avaliação
+                                            </MudText>
+                                            <MudText Typo="Typo.caption" Style="margin-bottom: 2rem; font-size: 0.7rem;">
+                                                Avalie os funcionários desse departamento em cada um dos Aspectos abaixo
+                                            </MudText>
+                                        }
+                                        else
+                                        {
+                                            <MudText Typo="Typo.body1" Style="margin-bottom: 0.6rem">
+                                                Aspectos de Avaliação
+                                            </MudText>
+                                        }
+
+                                        <MudTabs PanelClass="px-4 pb-4 pt-4" Elevation="5" Rounded ApplyEffectsToContainer Style="margin-top: 1rem">
+
+                                            
+                                            @if(!assessmentModel.AssessmentAspects.Any())
+                                            {
+                                                <MudText Typo="Typo.body1" Style="padding-bottom: 0;font-size: 0.9rem;font-weight: 400;">
+                                                    Nenhum Aspecto de Avaliação Encontrado!
+                                                </MudText>
+                                                <MudText Typo="Typo.caption" Style="margin-bottom: 2rem; font-size: 0.7rem;">
+                                                    Não há nenhum Aspecto de Avaliação para Departamento @(department.Name)... Vá a tela de Critérios de Avaliação para cadastrar!
+                                                    </MudText>
+                                            }
+                                            else
+                                            {
+                                                @for (int j = 0; j < assessmentModel.AssessmentAspects.Count; j++)
+                                                {
+                                                    var aspect = assessmentModel.AssessmentAspects[j];
+
+                                                    <MudTabPanel Text="@aspect.Name">
+
+                                                        @for (int k = 0; k < employees.Count; k++)
+                                                        {
+                                                            var employment = employees[k];
+                                                            var assessmentEmployee = assessmentModel.AssessmentEmployees.FirstOrDefault(a => a.EmployeeId == employment.Id);
+
+                                                            <div class="d-flex" style="gap: 1rem; margin-bottom: 2rem;">
+
+                                                                <div style="width: 2%;
+                                                                    text-align: center;   
+                                                                    align-self: center;
+                                                                    padding-bottom: 1rem;
+                                                                ">
+                                                                    <MudIconButton Size="@Size.Small" Title="Resultado" Icon="@Icons.Material.Filled.FileOpen" OnClick="() => SeeAssessmentEmployeeDetails(employment)" />
+                                                                </div>
+                                                                
+
+                                                                <div style="width: 15%;">
+                                                                        <MudText title="Funcionário" Typo="Typo.body2" Style="font-size: 0.8rem; padding-top: 0.1rem;" Class="ellipsis">
+                                                                        Funcionário
+                                                                    </MudText>
+                                                                        <MudText title="@employment.Name" Typo="Typo.body1" Style="font-size: 0.95rem;  padding-top: 0.15rem;" Class="ellipsis">
+                                                                        @employment.Name
+                                                                    </MudText>
+                                                                    <div style="height: 1px; border-bottom: 1.5px solid #737379; padding-top: 0.1rem;">
+                                                                    </div>
+                                                                </div>
+
+                                                                <div style="width: 8%;">
+                                                                        <MudText title="Admissão" Typo="Typo.body2" Style="font-size: 0.8rem; padding-top: 0.1rem" Class="ellipsis">
+                                                                        Admissão
+                                                                    </MudText>
+                                                                        <MudText title="@(employment.AdmissionDate.Value.ToString("dd/MM/yyyy"))" Typo="Typo.body1" Style="font-size: 0.95rem; padding-top: 0.15rem;" Class="ellipsis">
+                                                                        @(employment.AdmissionDate.Value.ToString("dd/MM/yyyy"))
+                                                                    </MudText>
+                                                                        <div style="height: 1px; border-bottom: 1.5px solid #737379; padding-top: 0.1rem;">
+                                                                        </div>
+                                                                </div>
+
+                                                                    <div style="display: flex;
+                                                                    gap: 1rem;
+                                                                    max-width: 75%;
+                                                                    width: 75%;
+                                                                    overflow-x: auto;">
+
+
+                                                                @for (int l = 0; l < aspect.Criteria.Count(); l++)
+                                                                {
+                                                                    var currentlyAspect = assessmentEmployee.AssessmentCollections.SelectMany(c => c.AssessmentAspects).FirstOrDefault(a => a.Id == aspect.Id);
+                                                                    var currentlyCriteria = currentlyAspect.Criteria[l];
+                                                                    var criteriaType = currentlyCriteria.CriteriaType;
+
+                                                                    if (criteriaType == CriteriaType.Integer)
+                                                                    {
+                                                                        <div class="limitValueField">
+                                                                            <MudNumericField Style="width: fit-content" @bind-Value="@currentlyCriteria.ValueCriteria.ValueInt" Label="@currentlyCriteria.Name" HelperText="@($"{currentlyCriteria.GetValue()}/{currentlyCriteria.GetLimitValue()}   {(currentlyCriteria.IsPositive ? "(+)" : "(-)")}")" ErrorText="Valor Inválido" Variant="Variant.Text" Min="0" Margin="Margin.Dense" Immediate="true" />
+                                                                        </div>
+                                                                    }
+                                                                    else if (criteriaType == CriteriaType.Decimal)
+                                                                    {
+                                                                                                                                                <div class="limitValueField">
+
+                                                                        <MudNumericField Style="width: fit-content" @bind-Value="@currentlyCriteria.ValueCriteria.ValueDecimal" Label="@currentlyCriteria.Name" HelperText="@($"{currentlyCriteria.GetValue()}/{currentlyCriteria.GetLimitValue()}   {(currentlyCriteria.IsPositive ? "(+)" : "(-)")}")" Format="F2" ErrorText="Valor Inválido" Margin="Margin.Dense" Immediate="true" />
+                                                                    </div>
+                                                                    }
+                                                                    else if (criteriaType == CriteriaType.Percentage)
+                                                                    {
+                                                                                                                                                <div class="limitValueField">
+
+                                                                        <MudNumericField Style="width: fit-content" @bind-Value="@currentlyCriteria.ValueCriteria.ValuePercentage" Label="@currentlyCriteria.Name" HelperText="@($"{currentlyCriteria.GetValue()}/{currentlyCriteria.GetLimitValue()}   {(currentlyCriteria.IsPositive ? "(+)" : "(-)")}")" Format="F2" Adornment="Adornment.End" AdornmentText="%" Margin="Margin.Dense" Immediate="true" />
+                                                                    </div>
+                                                                    }
+                                                                    else if (criteriaType == CriteriaType.Time)
+                                                                    {
+                                                                                                                                                <div class="limitValueField">
+
+                                                                        <MudTextField Style="width: fit-content" @bind-Value="@currentlyCriteria.ValueCriteria.ValueTime" Label="@currentlyCriteria.Name" HelperText="@($"{currentlyCriteria.GetValue()}/{currentlyCriteria.GetLimitValue()}   {(currentlyCriteria.IsPositive ? "(+)" : "(-)")}")" Mask="@(new PatternMask("00:00"))" Margin="Margin.Dense" Validation="@(new Func<string, IEnumerable<string>>(ValidateValue))" Immediate="true" />
+                                                                    </div>
+                                                                    }
+                                                                }
+                                                                    </div>
+                                                            </div>
+                                                        }
+                                                    </MudTabPanel>
+                                                }
+                                            }        
+                                        </MudTabs>                
+                                    }                
+                                </div>    
+                            </ChildContent>
+                        </MudExpansionPanel>                      
+                    }
+                </MudExpansionPanels>
+                }
+            </MudForm>
+        </MudItem>
+    </MudGrid>
+</MudCard>
+
+
+@code {
+    MudForm form;
+
+    [Parameter]
+    public int? AssessmentIdParameter { get; set; }
+
+    [Parameter]
+    public bool IsReadonlyParameter { get; set; }
+
+    [Parameter]
+    public bool IsClosedParameter { get; set; }
+
+    [Parameter]
+    public EventCallback OnGoBack { get; set; }
+
+
+    [Inject] MonthlyAssessmentService MonthlyAssessmentService { get; set; }
+    [Inject] EmployeeService EmployeeService { get; set; }
+    [Inject] AssessmentCollectionService AssessmentCollectionService { get; set; }
+    [Inject] AssessmentEmployeeService AssessmentEmployeeService { get; set; }
+    [Inject] DepartmentService DepartmentService { get; set; }
+
+
+    public MonthlyAssessment assessment { get; set; } = new MonthlyAssessment();
+    public List<AssessmentModel> assessmentModels { get; set; } = new List<AssessmentModel>();
+
+    private bool showDepartments = false;
+    public bool IsEditable = false;
+
+
+    public int? AssessmentId { get; set; }
+    public bool IsReadonly { get; set; }
+    public bool IsClosed { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        AssessmentId = AssessmentIdParameter;
+        IsReadonly = IsReadonlyParameter;
+        IsClosed = IsClosedParameter;
+
+        await LoadData();
+    }
+
+    private void OrderDepartmentsChanged(int value)
+    {
+        assessment.OrderByDepartment = value;
+        if (value == 0)
+        {
+            assessmentModels = assessmentModels
+                .OrderBy(a => a.Department.Name)
+                .ToList();
+        }
+        else if (value == 1)
+        {
+            assessmentModels = assessmentModels
+                .OrderByDescending(a => a.AssessmentEmployees.Count)
+                .ToList();
+        }
+    }
+
+    private async Task LoadData()
+    {
+        IsEditable = !IsReadonly && !IsClosed;
+
+        if (!AssessmentId.HasValue)
+        {
+            assessment = new MonthlyAssessment();
+            IsEditable = true;
+            return;
+        }
+
+        assessment = IsEditable ? await MonthlyAssessmentService.GetByIdUpdated(AssessmentId.Value) : await MonthlyAssessmentService.GetById(AssessmentId.Value);
+        if (assessment == null)
+        {
+            await DialogService.ShowError("Houve um erro ao carregar sua Avaliação! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+            await OnGoBack.InvokeAsync();
+        }
+    }
+
+
+    private async Task UpdateAssesmentsModels(DateTime? referenceDate = null)
+    {
+        assessmentModels.Clear();
+        List<Department> assessmentDepartments = new List<Department>();
+        List<AssessmentCollection> assessmentCollections = new List<AssessmentCollection>();
+        List<AssessmentEmployee> assessmentEmployees = new List<AssessmentEmployee>();
+        List<Employee> employees = new List<Employee>();
+
+        assessmentDepartments = (await DepartmentService.GetAll()).ToList();
+        if (IsEditable)
+        {
+            employees = (await EmployeeService.GetAllByReferenceDate(referenceDate.Value)).ToList();
+            assessmentCollections = (await AssessmentCollectionService.GetAll()).Where(c => c.Departments.Any(cd => assessmentDepartments.Any(d => d.Id == cd.Id))).ToList();
+
+            assessment.AssessmentCollections = assessmentCollections;
+        }
+
+        if(AssessmentId.HasValue)
+        {
+            assessmentEmployees = await AssessmentEmployeeService.GetAssessmentEmployeesByAssessmentId(assessment.Id, AssessmentType.MonthlyAssessment, IsEditable);
+        }
+        else
+        {
+            assessmentEmployees = employees.Select(e => new AssessmentEmployee(e, assessmentCollections)).ToList();
+        }
+
+        if(IsEditable)
+        {
+            assessmentEmployees.RemoveAll(ae => !employees.Any(e => e.Id == ae.EmployeeId));
+
+            var newEmployeesAssessments = employees
+                .Where(e => !assessmentEmployees.Any(ae => ae.EmployeeId == e.Id))
+                .Select(e => new AssessmentEmployee(e, assessmentCollections))
+                .ToList();
+
+            assessmentEmployees.AddRange(newEmployeesAssessments);
+        }
+        else
+        {                     
+            assessmentCollections = assessment.AssessmentCollections;
+            assessmentDepartments = assessmentCollections.SelectMany(ac => ac.Departments).DistinctBy(d => d.Id).ToList();
+        }
+
+        for (int i = 0; i < assessmentDepartments.Count; i++)
+        {
+            var department = assessmentDepartments[i];
+            var assessmentModel = new AssessmentModel()
+            {
+                Department = department,
+                AssessmentCollections = assessmentCollections.Where(ac => ac.Departments.Any(d => d.Id == department.Id)).ToList(),
+                AssessmentEmployees = assessmentEmployees.Where(e => e.Employee.Position.Department.Id == department.Id).ToList()
+            };
+
+            if ((!assessmentModel.Employees.Any() || !assessmentModel.AssessmentAspects.Any()) && !IsEditable)
+                continue;
+
+            assessmentModels.Add(assessmentModel);
+        }
+
+        OrderDepartmentsChanged(assessment.OrderByDepartment);
+
+        showDepartments = true;
+    }
+
+    private async Task OnReferenceDateChanged(DateTime? referenceDate)
+    {
+        showDepartments = false;
+
+        assessment.ReferenceDate = referenceDate;
+        if(!assessment.ReferenceDate.HasValue)         
+            return;
+
+        await UpdateAssesmentsModels(referenceDate);
+    }
+
+
+    private IEnumerable<string> ValidateValue(string time)
+    {
+        if (time != "00:00" && !DateTime.TryParseExact(time, "HH:mm", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var teste))
+        {
+            yield return "O Tempo informado é inválido";
+        }
+    }
+
+
+    private async Task<bool> SaveScratch(bool fromGoBackEvent = false)
+    {
+        assessment.IsClosed = false;
+
+        await form.Validate();
+        if (!form.IsValid)
+        {
+            if (fromGoBackEvent)
+                await DialogService.ShowError("Verifique os campos obrigatórios para salvar");
+
+            return false;
+        }
+
+
+        var error = false;
+
+        Result<MonthlyAssessment> assessmentResult;
+
+        if (assessment.Id == 0)
+        {
+            assessmentResult = await MonthlyAssessmentService.Insert(assessment);
+            if (assessmentResult.IsSuccess)
+            {
+                var assessmentsEmployees = assessmentModels.SelectMany(am => am.AssessmentEmployees).ToArray();
+                if (assessmentsEmployees.Any())
+                {
+                    foreach (var assessmentEmployee in assessmentsEmployees)
+                    {
+                        assessmentEmployee.AssessmentId = assessment.Id;
+                        assessmentEmployee.AssesmentType = AssessmentType.MonthlyAssessment;
+                        var assessmentEmployeeResult = await AssessmentEmployeeService.Insert(assessmentEmployee);
+
+                        if (!assessmentEmployeeResult.IsSuccess)
+                        {
+                            await MonthlyAssessmentService.Delete(assessment.Id);
+                            error = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            var deleteResult = await MonthlyAssessmentService.Delete(assessment.Id);
+            if (!deleteResult.IsSuccess)
+            {
+                await DialogService.ShowError("Não foi possivel salvar o Rascunho da sua Avaliação! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+                return false; 
+            }
+
+            assessmentResult = await MonthlyAssessmentService.Insert(assessment);
+            if (assessmentResult.IsSuccess)
+            {
+                var assessmentsEmployees = assessmentModels.SelectMany(am => am.AssessmentEmployees).ToArray();
+                if (assessmentsEmployees.Any())
+                {
+                    foreach (var assessmentEmployee in assessmentsEmployees)
+                    {
+                        assessmentEmployee.AssessmentId = assessment.Id;
+                        assessmentEmployee.AssesmentType = AssessmentType.MonthlyAssessment;
+
+                        var assessmentEmployeeResult = await AssessmentEmployeeService.Insert(assessmentEmployee);
+                        if (!assessmentEmployeeResult.IsSuccess)
+                        {        
+                            error = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+
+        if (error || !assessmentResult.IsSuccess)
+        {
+            await DialogService.ShowError("Não foi possivel salvar o Rascunho da sua Avaliação! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+            return false;
+        }
+
+        Snackbar.Add("Rascunho de Avaliação salvo com sucesso!", severity: MudBlazor.Severity.Info);
+
+        return true;
+    }
+
+    private async Task<bool> SaveConfirmation()
+    {
+        await form.Validate();
+        if (!form.IsValid)
+        {
+            assessment.IsClosed = false;
+            return false;
+        }
+
+        var parameters = new DialogParameters
+        {
+            { "Color", Color.Warning }
+        };
+
+        var mensagem = $"Tem certeza que deseja finalizar essa Avaliação? \n\nTodas as informações dessa avaliação serão salvas e imutaveis independente de alterações externas!";
+        var result = await DialogService.ShowQuestion("Aviso!", mensagem, parameters);
+        if (result.Canceled)
+            return false; 
+
+        var assessmentsClosedByReference = await MonthlyAssessmentService.GetByReferenceDate(assessment.ReferenceDate.Value);
+        if(assessmentsClosedByReference.Any())
+        {
+            await DialogService.ShowError("Já existe uma Avaliação Concluida para essa Data de Competência \n\nReabra a outra avaliação para salvar essa!");
+            return false; 
+        }
+
+        assessment.IsClosed = true;
+        assessment.ClosedDate = DateTime.Now.Date;
+
+        var error = false;
+
+        Result<MonthlyAssessment> assessmentResult;
+        if (assessment.Id == 0)
+        {
+            assessmentResult = await MonthlyAssessmentService.Insert(assessment);
+            if (assessmentResult.IsSuccess)
+            {
+                var assessmentsEmployees = assessmentModels.SelectMany(am => am.AssessmentEmployees).ToArray();
+                if (assessmentsEmployees.Any())
+                {
+                    foreach (var assessmentEmployee in assessmentsEmployees)
+                    {
+                        assessmentEmployee.AssessmentId = assessment.Id;
+                        assessmentEmployee.AssesmentType = AssessmentType.MonthlyAssessment;
+                        var assessmentEmployeeResult = await AssessmentEmployeeService.Insert(assessmentEmployee);
+
+                        if (!assessmentEmployeeResult.IsSuccess)
+                        {
+                            await MonthlyAssessmentService.Delete(assessment.Id);
+                            error = true;
+                            break;
+                        }
+
+                    }
+                }
+            }
+        }
+        else
+        {
+            var deleteResult = await MonthlyAssessmentService.Delete(assessment.Id);
+            if (!deleteResult.IsSuccess)
+            {
+                await DialogService.ShowError("Não foi possivel salvar sua Avaliação! \n\nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+                assessment.IsClosed = false;
+                return false;
+            }
+
+            assessmentResult = await MonthlyAssessmentService.Insert(assessment);
+            if (assessmentResult.IsSuccess)
+            {
+                var assessmentsEmployees = assessmentModels.SelectMany(am => am.AssessmentEmployees).ToArray();
+                if (assessmentsEmployees.Any())
+                {
+                    foreach (var assessmentEmployee in assessmentsEmployees)
+                    {
+                        assessmentEmployee.AssessmentId = assessment.Id;
+                        assessmentEmployee.AssesmentType = AssessmentType.MonthlyAssessment;
+
+                        var assessmentEmployeeResult = await AssessmentEmployeeService.Insert(assessmentEmployee);
+                        if (!assessmentEmployeeResult.IsSuccess)
+                        {        
+                            error = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+
+        if (error || !assessmentResult.IsSuccess)
+        {
+            await DialogService.ShowError("Não foi possivel salvar sua Avaliação! \n\nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+            assessment.IsClosed = false;
+            return false; 
+        }
+
+        Snackbar.Add("Avaliação salva com sucesso!", severity: MudBlazor.Severity.Success);
+
+        IsClosed = true;
+        IsReadonly = false;
+        AssessmentId = assessment.Id;
+
+        await LoadData();
+        await UpdateAssesmentsModels(assessment.ReferenceDate);
+
+        return true;
+    }
+
+    private async Task EditAssesment()
+    {
+        IsReadonly = false;
+        await LoadData();
+
+        StateHasChanged();
+    }
+
+    private async Task OpenAssessment()
+    {
+        var parameters = new DialogParameters
+        {
+            { "Color", Color.Warning }
+        };
+
+        var mensagem = $"Tem certeza que deseja reabrir essa Avaliação? \n\nSe alguma informação dessa Avaliação não estiver mais disponivel no sistema, por conta de exclusão ou atualização, as informações serão perdidas!";
+
+        var result = await DialogService.ShowQuestion("Aviso!", mensagem, parameters);
+        if (result.Canceled)
+            return;
+
+        assessment.IsClosed = false;
+        assessment.ClosedDate = null;
+
+        var updateResult = await MonthlyAssessmentService.Update(assessment.Id, assessment);
+        if(updateResult.IsSuccess)
+        {
+            await DialogService.ShowError("Não foi possivel reabrir essa Avaliação! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+            return;
+        }
+
+        IsClosed = false;
+        IsReadonly = false;
+
+        await LoadData();
+        await UpdateAssesmentsModels(assessment.ReferenceDate);
+    }
+
+    private async Task GoBack()
+    {   
+        if(IsClosed || IsReadonly)
+        {
+            await OnGoBack.InvokeAsync();
+            return;
+        }
+
+        var parameters = new DialogParameters
+        {
+            { "Color", Color.Warning }
+        };
+
+        var mensagem = $"Desaje salvar as alterações realizadas no Rascunho?";
+        var result = await DialogService.ShowQuestion("Aviso!", mensagem, parameters);
+        if (result.Canceled)
+        {     
+            await OnGoBack.InvokeAsync();
+            return;
+        }
+
+        var resultScract = await SaveScratch(true);
+        if (resultScract)
+            await OnGoBack.InvokeAsync();
+    }
+
+
+    private async Task SeeAssessmentEmployeeDetails(Employee employee)
+    {
+
+        var assessmentExist = await MonthlyAssessmentService.GetById(assessment.Id);
+        if(assessmentExist == null)
+        {
+            await DialogService.ShowError("Salve a Avaliação para visualizar os detalhes");
+            return;
+        }
+
+        var parameters = new DialogParameters();
+        parameters.Add("Assessment", assessment);
+        parameters.Add("Employee", employee);
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraLarge, DisableBackdropClick = true, CloseOnEscapeKey = false };
+
+        await DialogService.Show<AssessmentEmployeeDetailsDialog>("Avaliação de Funcionário", parameters, options).Result;      
+    }
+
+
+    private bool _processingSendAssessments { get; set; }
+    async Task<bool> SendAllAssessments()
+    {
+        _processingSendAssessments = true;
+        try
+        {
+            //await PdfService.SendMonthlyReportsByEmail(assessment, assessmentModels.ToArray());
+            new WhatsappService().SendMessage("Teste");
+            Snackbar.Add($"Avaliações Mensais {assessment.ReferenceDate.Value.ToString("MM/yyyy")} enviados com Sucesso!", MudBlazor.Severity.Success);
+        }
+        catch (Exception e)
+        {
+            Snackbar.Add($"Erro ao enviar as Avaliações Mensais {assessment.ReferenceDate.Value.ToString("MM/yyyy")}! Entre em contato com o suporte", MudBlazor.Severity.Error);
+        }
+
+        _processingSendAssessments = false;
+        return true;
+    }
+
+    private bool _processingDownloadAll { get; set; }
+    async Task<bool> DownloadAllAssessments()
+    {
+        var processId = $"download-assessments-{nameof(MonthlyAssessment)}-{assessment.Id}";
+        if (NotificationsService.ProcessAlreadyRunning(processId))
+        {
+            Snackbar.Add($"Esse download já está em andamento, verifique suas notificações para acompanhar o progresso", MudBlazor.Severity.Error);
+            return true;
+        }
+
+        _processingDownloadAll = true;
+        try
+        {
+            var total = assessmentModels.SelectMany(a => a.Employees).Count();
+            var notification = new Notification($"As Avaliações mensais {assessment.ReferenceDate.Value.ToString("MM/yyyy")} estão sendo baixadas", Convert.ToDouble(total), processId);
+            NotificationsService.AddProgressNotification(notification);
+
+            await foreach (int n in PdfService.DownloadAllMonthlyAssessments(assessment, assessmentModels.ToArray()))
+            {
+                NotificationsService.UpdateProgressNotification(notification, n);
+            }
+
+            NotificationsService.RemoveNotification(notification);
+            NotificationsService.AddNotification($"Relatórios da Avaliação Mensal {assessment.ReferenceDate.Value.ToString("MM/yyyy")} salvos com sucesso!");
+        }
+        catch (Exception e)
+        {
+            Snackbar.Add($"Erro ao salvar as Avaliações Mensais {assessment.ReferenceDate.Value.ToString("MM/yyyy")}! Entre em contato com o suporte", MudBlazor.Severity.Error);
+        }
+        finally
+        {        
+            GC.Collect();     
+        }
+
+        _processingDownloadAll = false;
+        return true;
+    }
+
+    async Task<bool> VoidButton()
+    {
+        return true;
+    }
+
+    MonthlyAssessmentValidator monthlyAssessmentValidator = new();
+
+    internal class MonthlyAssessmentValidator : AbstractValidator<MonthlyAssessment>
+    {
+        public MonthlyAssessmentValidator()
+        {
+            RuleFor(p => p.Responsible)
+                .NotEmpty().WithMessage("O Nome do Responsável é obrigatório")
+                .MaximumLength(200).WithMessage("O Nome deve conter no máximo 200 caracteres");
+
+            RuleFor(p => p.ReferenceDate)
+                .NotNull().WithMessage("A Competência é obrigatória")
+                .NotEqual(default(DateTime)).WithMessage("A Competência é obrigatória")
+                .NotEmpty().WithMessage("A Competência é obrigatória")
+                .LessThanOrEqualTo(DateTime.Now.Date.AddMonths(-1)).WithMessage("Não é possivel selecionar uma Competência Atual ou Futura");
+        }
+
+        public Func<object, string, Task<IEnumerable<string>>> ValidateValue => async (model, propertyName) =>
+        {
+            var result = await ValidateAsync(ValidationContext<MonthlyAssessment>.CreateWithOptions((MonthlyAssessment)model, x => x.IncludeProperties(propertyName)));
+            if (result.IsValid)
+                return Array.Empty<string>();
+
+            return result.Errors.Select(e => e.ErrorMessage);
+        };
+    }
+}

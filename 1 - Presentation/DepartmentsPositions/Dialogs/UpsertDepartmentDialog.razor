@@ -1,0 +1,154 @@
+﻿@using AvaliaRBI.Shared.Functions;
+@using AvaliaRBI._2___Application;
+@using AvaliaRBI._3___Domain;
+@using FluentValidation;
+@inject IDialogService DialogService
+
+@inject ISnackbar Snackbar
+
+<MudDialog Style="padding: 0.5rem 1rem 0.5rem 1rem">
+    <TitleContent>
+        <MudGrid Style="padding: 1rem 0 1rem 0.7rem">
+
+            @if (isUpdate && !isReadonly)
+            {
+                <MudText Typo="Typo.h6">
+                    Edição de Departamento
+                </MudText>
+            }
+            else if (!isUpdate && !isReadonly)
+            {
+                <MudText Typo="Typo.h6">
+                    Cadastro de Departamento
+                </MudText>
+            }
+            else if (isReadonly)
+            {
+                <MudText Typo="Typo.h6">
+                    Detalhes do Departamento
+                </MudText>
+            }
+
+        </MudGrid>
+    </TitleContent>
+    <DialogContent>
+        <MudForm Model="@department" @ref="@form" Validation="departmentValidator.ValidateValue" ValidationDelay="0" ReadOnly="isReadonly">
+            <MudTextField T="string" @bind-Value="@department.Name" For="@(() => department.Name)" Label="Nome" Immediate="true" />
+            <MudSelect T="int?" @bind-Value="@department.SectorId" For="@(() => department.SectorId)" Label="Setor" AnchorOrigin="Origin.BottomCenter" Clearable="!isReadonly">
+                @foreach (var sector in sectors)
+                {
+                    <MudSelectItem T="int?" Value="@sector.Id">@sector.Name</MudSelectItem>
+                }
+            </MudSelect>
+            <MudTextField T="string" @bind-Value="@department.Description" For="@(() => department.Description)" Label="Descrição" Immediate="true" AutoGrow />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudElement HtmlTag="div" Style="padding: 15px 10px 10px 0;">
+            @if (!isReadonly)
+            {
+                <MudButton OnClick="Cancel">Cancelar</MudButton>
+                <MudButton Color="Color.Success" OnClick="SaveDepartment">Salvar</MudButton>
+            }
+            @if (isReadonly)
+            {
+                <MudButton OnClick="Cancel">Fechar</MudButton>
+            }
+         </MudElement>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    MudForm form;
+
+    [Inject] DepartmentService DepartmentService { get; set; }
+    [Inject] SectorService SectorService { get; set; }
+
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public Department department { get; set; } = new Department();
+    [Parameter] public bool isUpdate { get; set; }
+    [Parameter] public bool isReadonly { get; set; }
+
+    private List<Sector> sectors = new List<Sector>();
+
+    DepartmentCommandValidator departmentValidator = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        departmentValidator = new(DepartmentService);
+        sectors = (await SectorService.GetAll()).ToList();
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private async Task SaveDepartment()
+    {
+        await form.Validate();
+        if (!form.IsValid)
+            return;
+
+
+        var currentpDepartment = await DepartmentService.GetByName(department.Name);
+        if (currentpDepartment != null && currentpDepartment.Id != department.Id)
+        {
+            await DialogService.ShowError("Já existe um registro cadastrado com este nome.");
+            return;
+        }
+
+        var newDepartment = new Department(department);
+        if (isUpdate)
+        {
+            var updateResult = await DepartmentService.Update(newDepartment.Id, newDepartment);
+            if (updateResult.IsSuccess)
+            {
+                Snackbar.Add("Departamento Atualizado!", MudBlazor.Severity.Success);
+                MudDialog.Close(DialogResult.Ok(newDepartment));
+                return;
+            }
+
+           await DialogService.ShowError("Não foi possivel atualizar esse Departamento! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+
+            return;
+        }
+
+        var createResult = await DepartmentService.Insert(newDepartment);
+        if (createResult.IsSuccess)
+        {
+            newDepartment.Sector = await SectorService.GetById(newDepartment.SectorId.Value);
+
+            Snackbar.Add("Departamento Cadastrado!", MudBlazor.Severity.Success);
+            MudDialog.Close(DialogResult.Ok(newDepartment));
+
+            return;
+        }
+
+        await DialogService.ShowError("Não foi possivel criar esse Departamento! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+    }
+
+    internal class DepartmentCommandValidator : AbstractValidator<Department>
+    {
+        public DepartmentCommandValidator(DepartmentService departmentService)
+        {
+            RuleFor(p => p.Name)
+                .NotEmpty().WithMessage("O Nome é obrigatório")
+                .MaximumLength(255).WithMessage("O Nome deve conter no máximo 150 caracteres");
+
+            RuleFor(p => p.Description)
+                .MaximumLength(800).WithMessage("A Descrição deve conter no máximo 800 caracteres");
+        }
+
+        public Func<object, string, Task<IEnumerable<string>>> ValidateValue => async (model, propertyName) =>
+        {
+            var result = await ValidateAsync(ValidationContext<Department>.CreateWithOptions((Department)model, x => x.IncludeProperties(propertyName)));
+            if (result.IsValid)
+                return Array.Empty<string>();
+
+            return result.Errors.Select(e => e.ErrorMessage);
+        };
+    }
+}

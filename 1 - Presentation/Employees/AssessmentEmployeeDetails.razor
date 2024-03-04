@@ -1,0 +1,333 @@
+﻿@using AvaliaRBI.Shared.Extensions;
+@using AvaliaRBI.Shared.Functions;
+@using AvaliaRBI._2___Application;
+@using AvaliaRBI._2___Application.Shared;
+@using AvaliaRBI._3___Domain;
+@using AvaliaRBI._3___Domain.Models;
+@using System.Globalization;
+@using ApexCharts;
+@inject IJSRuntime jsRuntime
+@inject IDialogService DialogService
+
+<style>
+    .mud-table-cell-custom-group {
+        font-weight: 500;
+    }
+    .mud-table-cell-custom-group-footer {
+        padding-bottom: 50px;
+        text-align: right;
+    }
+
+    .apexcharts-toolbar {
+        display: none;
+    }
+</style>
+
+<MudGrid Style="min-width: 80rem; padding-bottom:2rem" >
+
+    <MudItem xs="3">
+        <MudCard Style="height: 5rem;" Elevation="4">
+            <MudCardContent Style="padding: 12px;">
+                <MudText Typo="Typo.body2" Style="font-size: 0.8rem;">Funcionário</MudText>
+                <MudText Style="padding-top: 0.6rem;font-size: 1.1rem;">@employee.Name</MudText>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="3">
+        <MudCard Style="height: 5rem;" Elevation="4">
+            <MudCardContent Style="padding: 12px;">
+                <MudText Typo="Typo.body2" Style="font-size: 0.8rem;">Cargo</MudText>
+                <MudText Style="padding-top: 0.6rem;font-size: 1.1rem;">@employee.Position.Name</MudText>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="3">
+        <MudCard Style="height: 5rem;" Elevation="4">
+            <MudCardContent Style="padding: 12px;">
+                <MudText Typo="Typo.body2" Style="font-size: 0.8rem;">Departamento</MudText>
+                <MudText Style="padding-top: 0.6rem;font-size: 1.1rem;">@employee.Position.Department.Name</MudText>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="3">
+        <MudCard Style="height: 5rem;" Elevation="4">
+            <MudCardContent Style="padding: 12px;">
+                <MudText Typo="Typo.body2" Style="font-size: 0.8rem;">Competência</MudText>
+                <MudText Style="padding-top: 0.6rem;font-size: 1.1rem;">@(assessment.ReferenceDate.HasValue ? GetFormatedDate(assessment.ReferenceDate.Value) : string.Empty)</MudText>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" >
+        <div class="d-flex">
+            <MudGrid Style="height: 75vh;">
+                    <MudItem xs="6">
+                    <MudCard Elevation="4" Style="height: 100%">
+                        <MudCardContent>
+                                <MudText Typo="Typo.h6">Resumo do Desempenho</MudText>
+                                <MudTable Style="margin-top: 0.5rem" 
+                                    Elevation="0" Items="@criteria" Dense="true" Hover="true" ReadOnly="true" FixedHeader="true"
+                                          GroupBy="@_groupDefinition" GroupHeaderStyle="@HeaderStyle">
+                                <ColGroup>
+                                    <col style="width:40%;" />
+                                    <col style="width:15%;" />
+                                    <col style="width:15%;" />
+                                    <col style="width:15%;" />
+                                    <col style="width:15%;" />
+                                </ColGroup>
+                                <HeaderContent>
+                                    <MudTh>Nome</MudTh>
+                                    <MudTh>Valor</MudTh>
+                                    <MudTh>Limite</MudTh>
+                                    <MudTh>Tendência</MudTh>
+                                    <MudTh>Desempenho</MudTh>
+                                </HeaderContent>
+                                    <GroupHeaderTemplate>
+                                        <MudTh Class="mud-table-cell-custom-group" colspan="5">@($"{aspects.First(a => a.Id == context.Items.First().AspectId).Name}")</MudTh>
+                                    </GroupHeaderTemplate>
+                                <RowTemplate>
+                                        <MudTd DataLabel="Name" Style="font-size: 0.9rem; padding-top: 0.2rem; padding-bottom: 0.2rem;">@context.Name</MudTd>
+                                        <MudTd DataLabel="Value" Style="font-size: 0.9rem; padding-top: 0.2rem; padding-bottom: 0.2rem;">@context.GetValue()</MudTd>
+                                        <MudTd DataLabel="LimitValue" Style="font-size: 0.9rem; padding-top: 0.2rem; padding-bottom: 0.2rem;">@context.GetLimitValue()</MudTd>
+                                        <MudTd DataLabel="IsPositive">@(context.IsPositive ? "Positiva" : "Negativa")</MudTd>
+                                        <MudTd DataLabel="Perfomance" Style="font-size: 0.9rem; padding-top: 0.2rem; padding-bottom: 0.2rem;">@(context.Performance.ToString("F2") + " %")</MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                    <MudItem xs="6" Style="padding-bottom: 0;" >
+                        <MudGrid Style="height: 100%;">
+                            <MudItem xs="12" Style="padding-bottom: 0;  height: 60%">
+                            <MudCard Elevation="4" Style="height: 100%;">
+                                <MudCardContent>
+                                    <MudText Typo="Typo.h6" Style="margin-bottom:1.5rem">Histórico de Desempenho</MudText>
+
+                                    <MudGrid Style="height: 360px;">
+                                        <MudItem xs="12" Style="padding-bottom: 1.5rem;  height: 100%">
+                                                <ApexChart TItem="HistoricGrade"
+                                                           Title=""
+                                                           Options=options
+                                                @ref=chart
+                                                           Width="@("100%")"
+                                                           Height="@("100%")" >
+
+                                                    <ApexPointSeries TItem="HistoricGrade"
+                                                                     Items="HistoricData"
+                                                                     Name="Notas"
+                                                                     SeriesType="SeriesType.Bar"
+                                                                     XValue="e => e.ReferenceDate"
+                                                                     YValue="e=> (decimal)e.Note"
+                                                                     ShowDataLabels />
+
+                                                </ApexChart>
+                                        </MudItem>
+                                    </MudGrid>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                        <MudItem xs="12" Style="padding-bottom: 0; height: 40%">
+                            <MudCard Elevation="4" Style="height: 100%;">
+                                    <MudText Style="padding-top: 1rem;padding-left: 1rem;" Typo="Typo.h6">Resultado</MudText>
+                                    <MudCardContent Style="height: calc(100% - 3rem); display: flex; align-items: center;">
+                                        <div class="d-flex flex-grow-1 gap-10" style="text-align: center;">
+                                            <MudPaper Class="flex-auto d-flex py-8" Width="50%" Style="justify-content: center; border-radius: 35px;" Elevation="5">
+
+                                                <MudGrid>
+                                                    <MudItem xs="12">
+                                                        <MudText Typo="Typo.h6">Nota Final</MudText>
+                                                    </MudItem>
+                                                    <MudItem xs="12">
+                                                    <MudText Typo="Typo.h3">@assessmentEmployee.Note.ToString("F2")</MudText>
+                                                    </MudItem>
+                                                </MudGrid>
+                                            </MudPaper>
+                                            <MudPaper Class="flex-auto d-flex py-8" Width="50%" Style="justify-content: center; border-radius: 35px;" Elevation="5">
+                                                    
+                                                <MudGrid>
+                                                    <MudItem xs="12">
+                                                        <MudText Typo="Typo.h6">Desempenho Total</MudText>
+                                                    </MudItem>
+                                                    <MudItem xs="12">
+                                                    <MudText Typo="Typo.h3">@(totalPerfomance.ToString("F2"))%</MudText>
+                                                    </MudItem>
+                                                </MudGrid>
+                                            </MudPaper>
+                                        </div>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                    </MudGrid>
+                </MudItem>
+            </MudGrid>
+        </div>
+    </MudItem>
+</MudGrid>
+
+@code {
+    [Parameter]
+    public int AssessmentIdParameter { get; set; }
+
+    [Parameter]
+    public int EmployeeIdParameter { get; set; }
+
+
+    [Inject] MonthlyAssessmentService MonthlyAssessmentService { get; set; }
+    [Inject] EmployeeService EmployeeService { get; set; }
+    [Inject] AssessmentEmployeeService AssessmentEmployeeService { get; set; }
+
+
+    public MonthlyAssessment assessment { get; set; } = new MonthlyAssessment();
+    public Employee employee { get; set; } = new Employee();
+    public AssessmentEmployee assessmentEmployee { get; set; } = new AssessmentEmployee();
+
+
+    public List<AssessmentCriteria> criteria { get; set; } = new List<AssessmentCriteria>();
+    public List<AssessmentAspect> aspects { get; set; } = new List<AssessmentAspect>();
+
+    private TableGroupDefinition<AssessmentCriteria> _groupDefinition = new()
+    {
+        GroupName = "Aspecto: ",
+        Indentation = false,
+        Expandable = false,
+        Selector = (e) => e.AspectId
+    };
+
+    public string HeaderStyle { get; set; }
+    public double totalPerfomance { get; set; } = 0.00;
+
+    protected override async Task OnInitializedAsync()
+    {
+        assessment = await MonthlyAssessmentService.GetById(AssessmentIdParameter);
+        assessmentEmployee = await AssessmentEmployeeService.GetAssessmentEmployeeByAssessmentAndEmployeeId(AssessmentIdParameter, EmployeeIdParameter);
+        employee = assessmentEmployee.Employee;
+
+        aspects = assessmentEmployee.AssessmentCollections.SelectMany(ac => ac.AssessmentAspects).ToList();
+        criteria = aspects.SelectMany(aa => aa.Criteria).ToList();
+
+        totalPerfomance = assessmentEmployee.AssessmentCollections.Sum(a => a.PercentageSum) / (assessmentEmployee.AssessmentCollections.Sum(a => a.QtdCriterias));
+
+        var lastThreeAssessments = await AssessmentEmployeeService.GetLastTreeAssessmentEmployee(assessment.ReferenceDate.Value, employee.Id);
+
+        for (int i = lastThreeAssessments.Count() - 1; i >= 0; i--)
+        {
+            HistoricData.Add(new HistoricGrade { ReferenceDate = GetFormatedDate(assessment.ReferenceDate.Value.AddDays(5).AddMonths(-(1 + i))), Note = lastThreeAssessments[i].Note });
+        }
+
+        HistoricData.Add(new HistoricGrade { ReferenceDate = GetFormatedDate(assessment.ReferenceDate.Value), Note = Math.Round(assessmentEmployee.Note, 2) });
+
+        HeaderStyle = ThemeConstants._isDarkMode ? "background-color:rgb(33 33 43 / 60%);" : "background-color: rgb(176 176 186 / 60%);";
+
+        options = new ApexChartOptions<HistoricGrade>
+        {
+
+            Xaxis = new XAxis
+            {
+                StepSize = 1,
+                Min= 0,
+                Max = 5,
+            },
+            Theme = new Theme
+            {
+                Mode = Mode.Dark,
+                Monochrome = new ThemeMonochrome
+                {
+                    Color = "#1c1c1f"
+                },
+            },
+            Chart = new Chart
+            {
+                Animations = new Animations
+                {
+                  Enabled = false  
+                },
+                Toolbar = new Toolbar
+                {
+                    Show = false
+                },
+                DropShadow = new DropShadow
+                {
+                    Enabled = true,
+                    Color = "",
+                    Top = 18,
+                    Left = 7,
+                    Blur = 10,
+                    Opacity = 0d
+                },
+                Background = "transparent",
+                Selection = new Selection
+                {
+                    Enabled = false,Fill = new SelectionFill
+                    {
+                        Opacity = 0d
+                    }
+                },
+                    ForeColor = ThemeConstants._isDarkMode ?  "#c3c3c5" : "#3b3b41"
+            },
+            DataLabels = new ApexCharts.DataLabels
+            {
+                OffsetY = -6d
+            },
+
+            Markers = new Markers { Shape = ShapeEnum.Circle, Size = 5, FillOpacity = new Opacity(1d) },
+            Stroke = new Stroke { Curve = Curve.Smooth },
+           PlotOptions = new PlotOptions
+           {
+               Bar = new PlotOptionsBar
+               {
+                   BorderRadius = 10,
+                    ColumnWidth = HistoricData.Count == 1 ? "30%" : (HistoricData.Count == 2 ? "50%" : (HistoricData.Count == 3 ? "60%" : "70%")),
+               },
+
+           },
+            Legend = new Legend
+            {
+                Position = LegendPosition.Top,
+                HorizontalAlign = ApexCharts.Align.Right,
+                Floating = true,
+                OffsetX = -5,
+                OffsetY = -25
+            },
+        };
+
+    }
+
+    public string GetFormatedDate(DateTime date)
+    {
+        CultureInfo cultura = new CultureInfo("pt-BR");
+
+        string mes = cultura.TextInfo.ToTitleCase(cultura.DateTimeFormat.GetMonthName(date.Month));
+
+        string ano = date.ToString("yyyy");
+
+        return $"{mes}/{ano}";
+    }
+
+    private List<HistoricGrade> HistoricData { get; set; } = new();
+
+    public class HistoricGrade
+    {
+        public string ReferenceDate { get; set; }
+        public double Note { get; set; }
+    }
+
+    private ApexChartOptions<HistoricGrade> options;
+    private ApexChart<HistoricGrade> chart;
+
+    public async Task TryCloseAsync()
+    {
+        var parameters = new DialogParameters { { "Color", MudBlazor.Color.Warning } };
+        var mensagem = "Tem certeza que deseja sair?";
+        var result = await DialogService.ShowQuestion("Aviso!", mensagem, parameters);
+
+        if (!result.Canceled)
+        {
+            // Prossiga com o fechamento ou a disposição do componente
+        }
+    }   
+    
+    async Task OnBeforeNavigation()
+    {
+        await TryCloseAsync();
+        // Se o usuário confirmar, prossiga com a navegação.
+    }
+}

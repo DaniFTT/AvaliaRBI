@@ -1,0 +1,228 @@
+﻿@using AvaliaRBI.Shared.Functions;
+@using AvaliaRBI._2___Application;
+@using AvaliaRBI._3___Domain;
+@using FluentValidation;
+@using FluentValidation.Internal;
+@inject IDialogService DialogService
+
+@inject ISnackbar Snackbar
+
+<MudDialog Style="padding: 0.5rem 1rem 0.5rem 1rem">
+    <TitleContent>
+        <MudGrid Style="padding: 1rem 0 1rem 0.7rem">
+
+            @if (isUpdate && !isReadonly)
+            {
+                <MudText Typo="Typo.h6">
+                    Edição de Funcionário
+                </MudText>
+            }
+            else if (!isUpdate && !isReadonly)
+            {
+                <MudText Typo="Typo.h6">
+                    Cadastro de Funcionário
+                </MudText>
+            }
+            else if (isReadonly)
+            {
+                <MudText Typo="Typo.h6">
+                    Detalhes do Funcionário
+                </MudText>
+            }
+
+        </MudGrid>
+    </TitleContent>
+    <DialogContent>
+        <MudForm Model="@employee" @ref="@form" Validation="employeeValidator.ValidateValue" ValidationDelay="0" ReadOnly="isReadonly">
+            <MudTextField T="string" @bind-Value="@employee.Name" For="@(() => employee.Name)" Label="Nome" Immediate="true" />
+            <MudTextField T="string" @bind-Value="@employee.RG" For="@(() => employee.RG)" Mask="@(new PatternMask("00.000.000-0"))" Label="RG" Immediate="true" />
+@*            <MudTextField T="string" @bind-Value="@employee.PhoneNumber" For="@(() => employee.PhoneNumber)" Mask="@(new PatternMask("(00) 0 0000-0000"))" Label="Número de Celular" Immediate="true" />
+*@            <MudDatePicker Label="Data de Admissão" Editable="true" @bind-Date="@employee.AdmissionDate" DisableToolbar="true" For="@(() => employee.AdmissionDate)" Mask="@(new DateMask("dd/MM/yyyy"))" DateFormat="dd/MM/yyyy" ErrorText="Data Inválida"/>
+
+            <MudSelect T="int?"           
+                For="@(() => employee.Position.DepartmentId)" 
+                ValueChanged="@OnDepartmentChanged"
+                Value="employee.Position.DepartmentId"
+                Label="Departamento" AnchorOrigin="Origin.BottomCenter" Clearable="!isReadonly">
+                @foreach (var department in departments)
+                {
+                    <MudSelectItem T="int?" Value="@department.Id">@department.Name</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudSelect T="int?" @bind-Value="@employee.PositionId" For="@(() => employee.PositionId)" Label="Cargo" AnchorOrigin="Origin.BottomCenter" Clearable="!isReadonly" Disabled="IsPositionDisabled">
+                @foreach (var position in positions)
+                {
+                    <MudSelectItem T="int?" Value="@position.Id">@position.Name</MudSelectItem>
+                }
+            </MudSelect>
+
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+
+        <MudElement HtmlTag="div" Style="padding: 15px 10px 10px 0;">
+
+            @if (!isReadonly)
+            {
+                <MudButton OnClick="Cancel">Cancelar</MudButton>
+                <MudButton Color="Color.Success" OnClick="SaveEmployee">Salvar</MudButton>
+            }
+
+            @if (isReadonly)
+            {
+                <MudButton OnClick="Cancel">Fechar</MudButton>
+            }
+        </MudElement>
+       
+    </DialogActions>
+
+</MudDialog>
+
+@code {
+    MudForm form;
+
+    [Inject] EmployeeService EmployeeService { get; set; }
+    [Inject] PositionService PositionService { get; set; }
+    [Inject] DepartmentService DepartmentService { get; set; }
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public Employee employee { get; set; } = new Employee();
+    [Parameter] public bool isUpdate { get; set; } = false;
+    [Parameter] public bool isReadonly { get; set; }
+
+    private List<PositionJob> positions = new List<PositionJob>();
+    private List<Department> departments = new List<Department>();
+
+    EmployeeCommandValidator employeeValidator = null;
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        employeeValidator = new(EmployeeService, isUpdate);
+
+        if (employee.Position == null)
+            employee.Position = new PositionJob();
+
+        departments = (await DepartmentService.GetAll()).ToList();
+        positions = (await PositionService.GetAll()).ToList();
+
+        await OnDepartmentChanged(employee.Position.DepartmentId);
+    }
+
+    bool IsPositionDisabled { get; set; } = true;
+
+    private async Task OnDepartmentChanged(int? selectedDepartmentId)
+    {
+        IsPositionDisabled = false;
+        if (selectedDepartmentId.HasValue && selectedDepartmentId.Value > 0)
+        {     
+            positions = (await PositionService.GetAll()).Where(p => p.DepartmentId == selectedDepartmentId.Value).ToList();           
+        }
+        else
+        {
+            IsPositionDisabled = true;
+            employee.PositionId = null;
+            positions.Clear();
+        }
+
+        employee.Position.DepartmentId = selectedDepartmentId;
+    }
+
+    private async Task SaveEmployee()
+    {
+        await form.Validate();
+        if (!form.IsValid)
+            return;
+
+        var newEmployee = new Employee(employee);
+        if (!newEmployee.AdmissionDate.HasValue)
+        {
+            await DialogService.ShowError("Selecione a Data de Admissão");
+            return;
+        }
+
+        if (isUpdate)
+        {
+            var updateResult = await EmployeeService.Update(newEmployee.Id, newEmployee);
+            if (updateResult.IsSuccess)
+            {
+                newEmployee.Position = await PositionService.GetById(newEmployee.PositionId.Value);
+
+                Snackbar.Add("Cargo Atualizado!", MudBlazor.Severity.Success);
+                MudDialog.Close(DialogResult.Ok(newEmployee));
+                return;
+            }
+
+            await DialogService.ShowError("Não foi possivel atualizar esse Funcionário! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+
+            return;
+        }
+
+        var createResult = await EmployeeService.Insert(newEmployee);
+        if (createResult.IsSuccess)
+        {
+            newEmployee.Position = await PositionService.GetById(newEmployee.PositionId.Value);
+
+            Snackbar.Add("Cargo Cadastrado!", MudBlazor.Severity.Success);
+            MudDialog.Close(DialogResult.Ok(newEmployee));
+
+            return;
+        }
+
+        await DialogService.ShowError("Não foi possivel criar esse Funcionário! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+    }
+
+    internal class EmployeeCommandValidator : AbstractValidator<Employee>
+    {
+        public EmployeeCommandValidator(EmployeeService employeeService, bool isUpdate)
+        {
+            RuleFor(p => p.Name)
+                .NotEmpty().WithMessage("O Nome é obrigatório")
+                .MaximumLength(255).WithMessage("O Nome deve conter no máximo 150 caracteres");
+
+            RuleFor(p => p.RG)
+                .NotEmpty().WithMessage("O RG é obrigatório")
+                .MinimumLength(12).WithMessage("O RG deve conter 12 caracteres")
+                .MaximumLength(12).WithMessage("O RG deve conter 12 caracteres");
+
+            RuleFor(p => p.RG).MustAsync(async (currentEmployee, rg, context) =>
+            {
+                var employee = await employeeService.GetByRG(rg);
+                return !(employee != null && employee.Id != currentEmployee.Id);
+            }).WithMessage("Já existe um funcionário cadastrado com este RG.");
+
+            RuleFor(p => p.PhoneNumber)
+                .MinimumLength(16).When(p => !string.IsNullOrEmpty(p.PhoneNumber)).WithMessage("O Número de Celular deve conter 16 caracteres")
+                .MaximumLength(16).When(p => !string.IsNullOrEmpty(p.PhoneNumber)).WithMessage("O Número de Celular deve conter 16 caracteres");
+
+            RuleFor(p => p.AdmissionDate)   
+                .NotNull().WithMessage("A Data de Admissão é obrigatório")
+                .NotEqual(default(DateTime)).When(P => P.AdmissionDate.HasValue).WithMessage("A Data de Admissão é obrigatório")
+                .NotEmpty().WithMessage("A Data de Admissão é obrigatório")
+                .LessThanOrEqualTo(DateTime.Now.Date).When(P => P.AdmissionDate.HasValue).WithMessage("Não é possivel selecionar uma data Futura");
+
+            RuleFor(p => p.PositionId)
+                .NotEmpty().WithMessage("O Cargo é obrigatório")
+                .GreaterThan(0).WithMessage("O Cargo é obrigatório");
+
+            RuleFor(p => p.Position.DepartmentId)
+                .NotEmpty().WithMessage("O Departamento é obrigatório")
+                .GreaterThan(0).WithMessage("O Departamento é obrigatório");
+        }
+        public Func<object, string, Task<IEnumerable<string>>> ValidateValue => async (model, propertyName) =>
+        {
+            var result = await ValidateAsync(ValidationContext<Employee>.CreateWithOptions((Employee)model, x => x.IncludeProperties(propertyName)));
+            if (result.IsValid)
+                return Array.Empty<string>();
+
+            return result.Errors.Select(e => e.ErrorMessage);
+        };
+    }
+}

@@ -1,0 +1,103 @@
+﻿@using AvaliaRBI.Shared.Functions;
+@using AvaliaRBI._2___Application;
+@using AvaliaRBI._2___Application.Shared;
+@using AvaliaRBI._3___Domain;
+@using FluentValidation;
+@inject IDialogService DialogService
+@inject IJSRuntime jsRuntime
+@inject ISnackbar Snackbar
+
+<MudDialog Style="max-height: 95vh; height: 100%; max-width: 1600px;" OnBackdropClick="Cancel" onclose="@(() => Cancel())">
+    <TitleContent>
+        <MudGrid>
+            <MudItem xs="5">
+                <MudText Typo="Typo.h6">
+                    Avaliação de Funcionário
+                </MudText>
+            </MudItem>
+
+            <MudItem xs="7" Style="text-align: end; padding-right: 5rem;">
+                <div class="d-flex gap-3" style="justify-content: end;">
+                    @if (Assessment.IsClosed)
+                {
+                    <MudChip Label="true" Color="Color.Success" Size="Size.Small" Variant="Variant.Outlined">Avaliação Concluida em @(Assessment.ClosedDate.HasValue ? Assessment.ClosedDate.Value.Date.ToString("dd/MM/yyyy") : string.Empty)</MudChip>
+
+                        <MudButton Disabled="@_processing" OnClick="async () =>
+                    {
+                        var result = !_processing ? await GeneratePdf() : await VoidButton();
+                    }" Variant="Variant.Filled" Color="Color.Primary" Style="width: 180px" Size="MudBlazor.Size.Small">
+                            @if (_processing)
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" title="Gerando PDF..." />
+                            }
+                            else
+                            {
+                                <MudText Style="font-size: 0.9rem">Gerar PDF</MudText>
+                            }
+                        </MudButton>
+                }
+                else
+                {
+                    <MudChip Label="true" Color="Color.Default" Size="Size.Small" Variant="Variant.Outlined">Rascunho de Avaliação</MudChip>
+                }
+
+
+                </div>
+            </MudItem>
+
+               
+        </MudGrid>
+    </TitleContent>
+    <DialogContent>
+
+
+        <AssessmentEmployeeDetails AssessmentIdParameter="Assessment.Id" EmployeeIdParameter="Employee.Id" />
+
+
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [Inject]
+    public AssessmentEmployeeService AssessmentEmployeeService { get; set; }
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public MonthlyAssessment Assessment { get; set; }
+
+    [Parameter]
+    public Employee Employee { get; set; }
+
+    private bool _processing { get; set; }
+    async Task<bool> GeneratePdf()
+    {
+        _processing = true;
+        try
+        {
+            var assessmentEmployee = await AssessmentEmployeeService.GetAssessmentEmployeeByAssessmentAndEmployeeId(Assessment.Id, Employee.Id);
+
+            await PdfService.DownloadMonthlyEmployeeReport(Assessment, Employee, assessmentEmployee);
+
+            Snackbar.Add("PDF gerado com sucesso!", MudBlazor.Severity.Success);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Erro: " + e.Message);
+            Snackbar.Add($"Erro ao gerar PDF! Entre em contato com o suporte", MudBlazor.Severity.Error);
+        }
+
+        _processing = false;
+        return true;
+    }
+
+    async Task<bool> VoidButton()
+    {
+        return true;
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

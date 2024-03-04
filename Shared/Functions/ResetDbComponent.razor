@@ -1,0 +1,44 @@
+﻿@using AvaliaRBI._3___Domain.Abstractions;
+
+@if (IsDebug())
+{
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Style="width:25%; margin-right: 2rem; margin-bottom: 1rem; font-size: 0.7rem" OnClick="async () => await OnButtonClicked()">Resetar DB @Name</MudButton>
+}
+
+@code {
+    [Parameter]
+    public string Name { get; set; }
+
+    [Parameter]
+    public EventCallback OnRestDb { get; set; }
+
+    protected override Task OnInitializedAsync()
+    {
+        return base.OnInitializedAsync();
+    }
+
+    [Inject] private IDialogService DialogService { get; set; }
+
+    private async Task OnButtonClicked()
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Aviso",
+            "Tem certeza que deseja resetar os dados dessa tela?",
+            yesText: "Sim", cancelText: "Cancelar");
+
+        if (result == null)
+            return;
+
+        await OnRestDb.InvokeAsync();
+    }
+
+    private bool IsDebug()
+    {
+        var isDebug = false;
+#if DEBUG
+        isDebug = true;
+#endif
+
+        return isDebug;
+    }
+}

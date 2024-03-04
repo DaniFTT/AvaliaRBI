@@ -1,0 +1,273 @@
+﻿@page "/monthly-assessments"
+
+@using System.Net.Http.Json
+@using AvaliaRBI.Shared.Functions
+@using AvaliaRBI._1___Presentation.AssessmentCollection.Dialogs;
+@using AvaliaRBI._1___Presentation.Employees.Dialogs;
+@using AvaliaRBI._2___Application;
+@using AvaliaRBI._3___Domain;
+@using System.Globalization;
+@using AvaliaRBI._3___Domain.Models;
+@inject IDialogService DialogService
+@inject NavigationManager NavigationManager
+
+
+<ResetDbComponent OnRestDb="ResetDb" Name="MonthlyAssessment" />
+
+<MudTabs Elevation="0" ApplyEffectsToContainer="true" Rounded="true" PanelClass="pt-2">
+    <MudTabPanel Text="Avaliações Mensais" Style="font-size: 0.8rem" ToolTip="Assessments">
+
+
+        @if (!_showUpsertScreen)
+        {
+        <MudDataGrid T="MonthlyAssessment" @ref="grid" MultiSelection="false" Items="@assessments" DragDropColumnReordering="MudGridConstants.DragDropReorderingEnabled" ColumnsPanelReordering="MudGridConstants.ColumnsPanelReorderingEnabled"
+                        ColumnResizeMode="MudGridConstants.ResizeMode" Hideable="MudGridConstants.Hideable" Filterable="MudGridConstants.Filterable" QuickFilter="@_quickFilter" Groupable="MudGridConstants.Groupable"
+                        FilterMode="@MudGridConstants.FilterMode" FilterCaseSensitivity="MudGridConstants.FilterCaseSensitivity" ShowMenuIcon="true" FixedHeader="true" Height="60vh"
+                        Hover="true" Dense="true" Bordered="false" Style="padding-top: 0.8rem; font-size: 0.7rem;">
+
+            <ToolBarContent>
+                <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                                AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0 mb-5"></MudTextField>
+                <MudSpacer />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Style="width:15%; margin-right: 2rem; font-size: 0.7rem" OnClick="() => CreateAssessment()">Nova Avaliação</MudButton>
+
+            </ToolBarContent>
+
+            <Columns>
+                <PropertyColumn Property="@(x => x.ReferenceDate.Value.ToString("yyyy", cultura))" Title="Ano" Hidden="false" Groupable="true" Sortable="true" Filterable="true" Comparer="new MudBlazor.Utilities.NaturalComparer()" />
+                <PropertyColumn Property="@(x => x.ReferenceDate.Value.ToString("MMMM", cultura))" Title="Mês" Hidden="false" Groupable="true" Sortable="true" Filterable="true" Comparer="new MudBlazor.Utilities.NaturalComparer()" />
+                    <PropertyColumn Property="x => !string.IsNullOrEmpty(x.Description) ? x.Description : (!x.IsClosed ? GetScratchMessage(x) : GetConfirmationMessage(x)) " Title="Descrição" Hidden="false" Groupable="true" Sortable="true" Filterable="true" Comparer="new MudBlazor.Utilities.NaturalComparer()" />
+                <PropertyColumn Property="x => x.Responsible" Title="Responsável" Hidden="false" Groupable="true" Sortable="true" Filterable="true" Comparer="new MudBlazor.Utilities.NaturalComparer()" />
+                <PropertyColumn Property="@(x => x.CreatedDate.Value.ToString("dd/MM/yyyy"))" Title="Criado em" Hidden="false" Groupable="true" Sortable="true" Filterable="true" Comparer="new MudBlazor.Utilities.NaturalComparer()" />
+                <TemplateColumn Title="Status" Hidden="false" Groupable="true" Sortable="true" Filterable="true">
+                        <FilterTemplate>
+                                <MudStack Spacing="0">
+                                    <MudCheckBox T="bool" Label="Selecionar todos" Size="@Size.Small" Value="@_selectAll" ValueChanged="@SelectAll" />
+                                    <MudStack Spacing="0" Style="overflow-y:auto;max-height:350px">
+                                        @foreach (var item in context.Items.DistinctBy(i => i.IsClosed))
+                                        {
+                                            @if (item.IsClosed)
+                                            {
+                                                <MudCheckBox T="bool" Label="@($"Concluido")" Size="@Size.Small" Value="@(_selectedItems.Contains(item))"
+                                                             ValueChanged="@((value) => SelectedChanged(value, item))" />
+                                            }
+                                            else
+                                            {
+                                                <MudCheckBox T="bool" Label="@($"Aberto")" Size="@Size.Small" Value="@(_selectedItems.Contains(item))"
+                                                             ValueChanged="@((value) => SelectedChanged(value, item))" />
+                                            }
+                                        }
+                                    </MudStack>
+                                    <MudStack Row="true">
+                                        <MudButton OnClick="@(() => ClearFilterAsync(context))">Limpar</MudButton>
+                                        <MudButton Color="@Color.Primary" OnClick="@(() => ApplyFilterAsync(context))">Filtrar</MudButton>
+                                    </MudStack>
+                                </MudStack>
+                        </FilterTemplate>
+
+                    <CellTemplate>
+                            @if (context.Item.IsClosed)
+                            {
+                                <MudChip Label="true" Color="Color.Success" Size="Size.Small" Variant="Variant.Outlined">Concluido</MudChip>
+                            }
+                            else
+                            {
+                                <MudChip Label="true" Color="Color.Default" Size="Size.Small" Variant="Variant.Outlined">Aberto</MudChip>
+                            }
+                        </CellTemplate>
+                    </TemplateColumn>
+                    <TemplateColumn Title=""  Hidden="false" Groupable="false" Sortable="false" Filterable="false">
+                        <CellTemplate>
+                            <div class="d-flex justify-end">
+                                <MudIconButton Style="margin-right:0.5rem" Size="@Size.Small" Title="Detalhes" Icon="@Icons.Material.Outlined.RemoveRedEye" OnClick="() => SeeAssessmentDetails(context.Item.Id)" />
+                                <MudIconButton Style="margin-right:0.5rem" Size="@Size.Small" Title="Editar" Icon="@Icons.Material.Outlined.Edit" OnClick="() => UpdateAssessment(context.Item.Id)" />
+                                <MudIconButton Size="@Size.Small" Title="Excluir" Icon="@Icons.Material.Outlined.Delete" OnClick="() => DeleteAssessment(context.Item.Id)" />
+                            </div>
+
+                        </CellTemplate>
+                    </TemplateColumn>
+                </Columns>
+                <PagerContent>
+                    <MudDataGridPager T="MonthlyAssessment" />
+                </PagerContent>
+            </MudDataGrid>
+        }
+        else
+        {
+            <MonthlyAssessmentUpsertPage AssessmentIdParameter="@_selectedAssessmentId" IsReadonlyParameter="@_isDetails" IsClosedParameter="@_isClosed" OnGoBack="@HideUpsertScreen" />
+        }
+
+    </MudTabPanel>
+</MudTabs>
+
+
+@code {
+
+    public MudDataGrid<MonthlyAssessment> grid = null;
+
+    [Inject]
+    public MonthlyAssessmentService MonthlyAssessmentService { get; set; }
+
+    [Inject]
+    public AssessmentEmployeeService AssessmentEmployeeService { get; set; }
+
+    private List<MonthlyAssessment> assessments;
+
+    CultureInfo cultura = new CultureInfo("pt-BR");
+
+    async Task ResetDb()
+    {
+        await AssessmentEmployeeService.ResetDb();
+        await MonthlyAssessmentService.ResetDb();
+        await OnInitializedAsync();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        assessments = (await MonthlyAssessmentService.GetAll()).ToList();
+        _selectedItems = assessments.ToHashSet();
+        _filterItems = assessments.ToHashSet();
+        _filterDefinition = new FilterDefinition<MonthlyAssessment>
+        {
+            FilterFunction = x => _filterItems.Contains(x)
+        };
+    }
+    HashSet<MonthlyAssessment> _selectedItems = new();
+    HashSet<MonthlyAssessment> _filterItems = new();
+    FilterDefinition<MonthlyAssessment> _filterDefinition;
+    bool _selectAll = true;
+
+    private void SelectedChanged(bool value, MonthlyAssessment item)
+    {
+        if (value)
+            _selectedItems.Add(item);
+        else
+            _selectedItems.Remove(item);
+
+        if (_selectedItems.Count == assessments.Count())
+            _selectAll = true;
+        else
+            _selectAll = false;
+    }
+
+    private async Task ClearFilterAsync(FilterContext<MonthlyAssessment> context)
+    {
+        _selectedItems = assessments.ToHashSet();
+        _filterItems = assessments.ToHashSet();
+        await context.Actions.ClearFilterAsync(_filterDefinition);
+    }
+
+    private async Task ApplyFilterAsync(FilterContext<MonthlyAssessment> context)
+    {
+        _filterItems = _selectedItems.ToHashSet();
+        await context.Actions.ApplyFilterAsync(_filterDefinition);
+    }
+
+    private void SelectAll(bool value)
+    {
+        _selectAll = value;
+
+        if (value)
+        {
+            _selectedItems = assessments.ToHashSet();
+        }
+        else
+        {
+            _selectedItems.Clear();
+        }
+    }
+
+    private string _searchString;
+    private Func<MonthlyAssessment, bool> _quickFilter => x =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if (x.Description.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (x.ReferenceDate.Value.ToShortDateString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (x.CreatedDate.HasValue && x.CreatedDate.Value.ToShortDateString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (x.AssessmentCollections.Any(ac => ac.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase)))
+            return true;
+
+        return false;
+    };
+
+
+    private string GetScratchMessage(MonthlyAssessment assessment) => $"Rascunho de Avaliação ({assessment.ReferenceDate.Value.ToString("MM/yyyy")})...";
+    private string GetConfirmationMessage(MonthlyAssessment assessment) => $"Avaliação Finalizada {(assessment.ClosedDate.HasValue ? "(" + assessment.ClosedDate.Value.ToString("dd/MM/yyyy") + ")" : string.Empty)}";
+
+    public DialogOptions GetDialogOptions()
+    {
+        return new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
+    }
+
+    private bool _showUpsertScreen = false;
+    private bool _isDetails = false;
+    private bool _isClosed = false;
+    private int? _selectedAssessmentId = null;
+
+
+    private async Task HideUpsertScreen()
+    {
+        _showUpsertScreen = false;
+        _isDetails = false;
+        _isClosed = false;
+        _selectedAssessmentId = null;
+
+        assessments = (await MonthlyAssessmentService.GetAll()).ToList();
+    }
+
+    private void SeeAssessmentDetails(int assessmentId)
+    {
+        _selectedAssessmentId = assessmentId;
+        _isDetails = true;
+        _isClosed = assessments.FirstOrDefault(a => a.Id == assessmentId).IsClosed;
+        _showUpsertScreen = true;
+    }
+
+    private void CreateAssessment()
+    {
+        _selectedAssessmentId = null;
+        _isClosed = false;
+        _showUpsertScreen = true;
+    }
+
+    private void UpdateAssessment(int assessmentId)
+    {
+        _selectedAssessmentId = assessmentId;
+        _isClosed = assessments.FirstOrDefault(a => a.Id == assessmentId).IsClosed;
+        _showUpsertScreen = true;
+    }
+
+
+    private async Task DeleteAssessment(int assessmentId)
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("ContentText", "Tem certeza de que deseja excluir essa Avaliação?");
+        parameters.Add("SecondaryText", "Essa ação não pode ser desfeita.");
+        parameters.Add("ButtonText", "Deletar");
+        parameters.Add("Color", Color.Error);
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+
+        var dialogResult = await DialogService.Show<DeleteRegisterDialog>("Deletar", parameters, options).Result;
+
+        if (dialogResult.Canceled)
+            return;
+
+        var result = await MonthlyAssessmentService.Delete(assessmentId);
+        if (!result.IsSuccess)
+        {
+            await DialogService.ShowError(result.Errors.FirstOrDefault());
+            return;
+        }
+        
+        assessments!.RemoveAll(assessment => assessment.Id == assessmentId);
+    }
+}

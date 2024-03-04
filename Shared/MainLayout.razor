@@ -1,0 +1,179 @@
+﻿@inherits LayoutComponentBase
+
+<MudDialogProvider />
+<MudSnackbarProvider />
+<MudThemeProvider Theme="MyCustomTheme" @bind-IsDarkMode="@ThemeConstants._isDarkMode" />
+
+<style>
+    .overflow-y-auto {
+        overflow-y: auto;
+    }
+
+    .notification-list .mud-list-item-icon {
+        min-width: 35px;
+    }
+</style>
+
+<MudLayout>
+    <MudAppBar Elevation="1" Dense="true">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudText Typo="Typo.h5" Class="ml-3">Valorizando Talentos</MudText>
+        <MudSpacer />
+        <div class="d-flex">
+
+            <MudBadge Visible="@(NotificationsService.UnreadedNotifications > 0)" Content="@NotificationsService.UnreadedNotifications" Color="Color.Error" Overlap="true" Bordered="true">
+            <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Notifications" Color="Color.Inherit" @onclick="ToggleNotifications" />
+        </MudBadge>
+
+
+            <MudPopover OverflowBehavior="OverflowBehavior.FlipNever" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopRight" Open="_isNotificationsPopoverOpen" MaxHeight="300" Class="overflow-y-auto">
+                <MudPaper Style="max-height: 300px" Class="overflow-y-auto">
+
+                @if(NotificationsService.Notifications.Count == 0)
+                    {
+                        <MudPaper  Class="px-4 py-3">
+                            <MudText>Nennhuma notificação!</MudText>
+                        </MudPaper>
+                    }
+                    else
+                    {
+                        <MudList Class="notification-list">
+                            @foreach (var notification in NotificationsService.Notifications)
+                            {
+                                if (notification.Type == Notification.NotificationType.Success)
+                                {
+
+                                    <MudListItem Icon="@Icons.Material.Filled.Bookmark" IconSize="Size.Small" IconColor="MudBlazor.Color.Success">
+                                        <div class="d-flex" style="align-items: center;">
+                                            <div class="d-flex flex-column" style="width: 100%; max-width: 500px;">
+                                                <MudText Typo="Typo.body2">@notification.Message</MudText>
+                                                <MudText Typo="Typo.caption" Style="    font-size: 0.6rem;">@notification.DateTime.ToString("HH:mm")</MudText>
+
+                                            </div>
+                                            <MudIconButton Style="margin-left:10px" Icon="@Icons.Material.Filled.Close" Size="Size.Small" aria-label="delete" OnClick="() => NotificationsService.RemoveNotification(notification)"></MudIconButton>
+                                        </div>
+                                    </MudListItem>
+                                }
+                                else if (notification.Type == Notification.NotificationType.Error)
+                                {
+
+                                    <MudListItem Icon="@Icons.Material.Filled.Error" IconSize="Size.Small" IconColor="MudBlazor.Color.Error">
+                                        <div class="d-flex" style="align-items: center;">
+                                            <div class="d-flex flex-column" style="width: 100%; max-width: 500px;">
+                                                <MudText Typo="Typo.body2">@notification.Message</MudText>
+                                                <MudText Typo="Typo.caption" Style="    font-size: 0.6rem;">@notification.DateTime.ToString("HH:mm")</MudText>
+
+                                            </div>
+                                            <MudIconButton Style="margin-left:10px" Icon="@Icons.Material.Filled.Close" Size="Size.Small" aria-label="delete" OnClick="() => NotificationsService.RemoveNotification(notification)"></MudIconButton>
+                                        </div>
+                                    </MudListItem>
+                                }
+                                else if (notification.Type == Notification.NotificationType.Warning)
+                                {
+
+                                    <MudListItem Icon="@Icons.Material.Filled.Warning" IconSize="Size.Small" IconColor="MudBlazor.Color.Warning">
+                                        <div class="d-flex" style="align-items: center;">
+                                            <div class="d-flex flex-column" style="width: 100%; max-width: 500px;">
+                                                <MudText Typo="Typo.body2">@notification.Message</MudText>
+                                                <MudText Typo="Typo.caption" Style="    font-size: 0.6rem;">@notification.DateTime.ToString("HH:mm")</MudText>
+
+                                            </div>
+                                            <MudIconButton Style="margin-left:10px" Icon="@Icons.Material.Filled.Close" Size="Size.Small" aria-label="delete" OnClick="() => NotificationsService.RemoveNotification(notification)"></MudIconButton>
+                                        </div>
+                                    </MudListItem>
+                                }
+                                else
+                                {
+                                    <MudListItem Icon="@Icons.Material.Filled.Downloading" IconSize="Size.Small" IconColor="MudBlazor.Color.Primary">
+                                        <div class="d-flex" style="align-items: center;">
+                                            <div class="d-flex flex-column" style="width: 100%; max-width: 500px;">
+                                                <MudText Typo="Typo.body2">@notification.Message</MudText>
+                                                <MudProgressLinear Color="Color.Primary" Value="@notification.Processing.GetPercentage()" Max="100" Class="my-2" />
+                                            </div>
+                                            <MudIconButton Style="margin-left:10px" Icon="@Icons.Material.Filled.Close" Size="Size.Small" aria-label="delete" OnClick="() => NotificationsService.RemoveNotification(notification)"></MudIconButton>
+                                        </div>
+                                    </MudListItem>
+
+                                }
+                            }
+                        </MudList>
+
+                    }
+                </MudPaper>
+
+            
+        </MudPopover>
+
+
+        </div>
+        <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
+        <MudSwitch @bind-Checked="@ThemeConstants._isDarkMode" Color="Color.Primary" Class="ml-2" T="bool" title="Modo Claro/Escuro" />
+
+    </MudAppBar>
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2" Style="padding-top: 0.5rem">
+        <NavMenu />
+    </MudDrawer>
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Fixed="true" Style="padding-top: 1.5rem; padding-bottom: 1.5rem;">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    bool _drawerOpen = true;
+    private MudTheme _theme = new();
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private bool _isNotificationsPopoverOpen = false;
+
+
+    private void ToggleNotifications()
+    {
+        if (!_isNotificationsPopoverOpen)
+            NotificationsService.UpdateNotificationsReaded();
+
+        _isNotificationsPopoverOpen = !_isNotificationsPopoverOpen;
+    }
+
+    protected override void OnInitialized()
+    {
+        NotificationsService.OnNotificationsChanged += NotificationsChanged;
+    }
+
+    private void NotificationsChanged()
+    {
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NotificationsService.OnNotificationsChanged -= NotificationsChanged;
+    }
+
+    MudTheme MyCustomTheme = new MudTheme()
+    {
+        Palette = new PaletteLight()
+        {
+            Primary = Colors.Orange.Darken3,
+            Secondary = Colors.Blue.Darken4,
+            AppbarBackground = Colors.Blue.Darken4,
+           
+        },
+        PaletteDark = new PaletteDark()
+        {
+            Primary = Colors.Blue.Lighten1
+        },
+
+        LayoutProperties = new LayoutProperties()
+        {
+            DrawerWidthLeft = "260px",
+            DrawerWidthRight = "500px"
+        }
+    };
+
+}
