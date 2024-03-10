@@ -1,0 +1,231 @@
+﻿@using AvaliaRBI.Shared.Extensions;
+@using AvaliaRBI._3___Domain.Models;
+@using FluentValidation;
+@using static AvaliaRBI._2___Application.Shared.Notification;
+@inject ISnackbar Snackbar;
+
+﻿<MudDialog>
+    <TitleContent>
+        <MudGrid Style="padding: 1rem 0 0rem 0.7rem">
+            @if (!IsImport)
+            {
+                <MudText Typo="Typo.h6">
+                    Detalhes da Importação
+                </MudText>
+            }
+            else
+            {
+                <MudText Typo="Typo.h6">
+                    Importar arquivo
+                </MudText>
+            }
+
+        </MudGrid>
+    </TitleContent>
+    <DialogContent>
+
+        @if (!IsImport)
+        {
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudText Style="font-size: 1rem;">@ImportNotificationModel?.Title</MudText>
+                    <MudText Typo="Typo.caption" Style="padding-top: 0.3rem;font-size: 0.7rem;">Finalizado em: @ImportNotificationModel?.FinishDate.ToString("dd/MM/yyy HH:mm:ss")</MudText>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudCard Style="height: 5rem;" Elevation="3">
+                        <MudCardContent Style="padding: 12px;">
+                            <MudText Typo="Typo.body2" Style="font-size: 0.8rem;">Nome do Arquivo</MudText>
+                            <MudText Style="padding-top: 0.6rem;font-size: 0.9rem;">@ImportNotificationModel?.FileName</MudText>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                <MudItem xs="2">
+                    <MudCard Style="height: 5rem;" Elevation="3">
+                        <MudCardContent Style="padding: 12px;">
+                            <MudText Typo="Typo.body2" Style="font-size: 0.8rem;">Processados</MudText>
+                            <MudText Style="padding-top: 0.6rem;font-size: 0.9rem;">@ImportNotificationModel?.ProcessedCount</MudText>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                <MudItem xs="2">
+                    <MudCard Style="height: 5rem;" Elevation="3">
+                        <MudCardContent Style="padding: 12px;">
+                            <MudText Typo="Typo.body2" Style="font-size: 0.8rem;">Inseridos</MudText>
+                            <MudText Style="padding-top: 0.6rem;font-size: 0.9rem;">@ImportNotificationModel?.InsertedCount</MudText>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                <MudItem xs="2">
+                    <MudCard Style="height: 5rem;" Elevation="3">
+                        <MudCardContent Style="padding: 12px;">
+                            <MudText Typo="Typo.body2" Style="font-size: 0.8rem;">Atualizados</MudText>
+                            <MudText Style="padding-top: 0.6rem;font-size: 0.9rem;">@ImportNotificationModel?.UpdatedCount</MudText>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+
+            <br />
+            @if (ImportNotificationModel != null && ImportNotificationModel.Notas.Any())
+            {
+                <MudTable Elevation="3" Items="@ImportNotificationModel.Notas" FixedHeader="true" Height="280px" Dense="true" Hover="true" Striped="true">
+                    <ColGroup>
+                        <col style="width: 5%;" />
+                        <col style="width: 85%;" />
+                        <col style="width: 10%;" />
+                        <col />
+                    </ColGroup>
+                    <HeaderContent>
+                        <MudTh>Linha</MudTh>
+                        <MudTh>Mensagem</MudTh>
+                        <MudTh>Tipo</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Linha">@context.Row.ToString()</MudTd>
+                        <MudTd DataLabel="Mensagem">@context.Message</MudTd>
+                        <MudTd DataLabel="Tipo">@context.Type.GetDescription()</MudTd>
+                    </RowTemplate>
+
+                    <PagerContent>
+                        <MudTablePager PageSizeOptions="new int[]{5, 10, 25, 50, 100, int.MaxValue}"
+                                       RowsPerPageString="Linhas por Pág."
+                                       InfoFormat="{first_item}-{last_item} de {all_items}"
+                                       AllItemsText="Tudo" />
+                    </PagerContent>
+                </MudTable>
+            }
+
+            <br />
+        }
+        else
+        {
+            <MudStack Style="width: 100%">
+                <MudForm Model="@ImportModel" Style="padding-top: 0;"
+                @bind-IsValid="_isValid"
+                @bind-IsTouched="_isTouched"
+                         Validation="@_validationRules.ValidateValue">
+                    <MudItem xs="12">
+                        <MudFileUpload T="IBrowserFile"
+                            Style="margin-top: 0"
+                                       Accept=".xlsx"
+                            @bind-Files="@ImportModel.File"
+                                           For="@(() => ImportModel.File)"
+                                           Hidden="@false"
+                                           InputClass="absolute mud-width-full mud-height-full overflow-hidden z-20"
+                                           InputStyle="opacity:0"
+                            @ondragenter="@SetDragClass"
+                            @ondragleave="@ClearDragClass"
+                            @ondragend="@ClearDragClass">
+                        <ButtonTemplate>
+                            <MudPaper Height="100px"
+                                      Outlined="true"
+                                      Class="@_dragClass">
+                                <MudText Typo="Typo.h6" Style="font-size: 1rem">
+                                    Clique aqui para selecionar seu arquivo
+                                </MudText>
+                                    @if(ImportModel.File != null)
+                                    {
+                                        <MudChip Color="Color.Dark" Text="@ImportModel.File.Name" />
+                                    }
+                                </MudPaper>
+                                <MudToolBar DisableGutters="true"
+                                            Class="relative d-flex justify-end gap-4 z-30">
+                                    <MudButton HtmlTag="label"
+                                               Size="Size.Small"
+                                               Color="Color.Primary"
+                                               for="@context.Id"
+                                               Variant="Variant.Filled">
+                                        Selecionar
+                                    </MudButton>
+                                    <MudButton OnClick="@Upload"
+                                                Size="Size.Small"
+                                               Color="Color.Primary"
+                                               Disabled="@(!_isValid || !_isTouched || ImportModel.File == null)"
+                                               Variant="Variant.Filled">
+                                        Confirmar
+                                    </MudButton>
+                                    <MudButton OnClick="@context.Actions.ClearAsync"
+                                               Size="Size.Small"
+                                               Color="Color.Error"
+                                               Disabled="@(ImportModel.File == null)"
+                                               Variant="Variant.Filled">
+                                        Limpar
+                                    </MudButton>
+                                </MudToolBar>
+                            </ButtonTemplate>
+                        </MudFileUpload>
+                    </MudItem>
+                </MudForm>
+            </MudStack>
+        }
+
+    </DialogContent>
+    </MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public ImportNotificationModel ImportNotificationModel { get; set; } = new ImportNotificationModel();
+    [Parameter] public ImportFileModel ImportModel { get; set; } = new ImportFileModel();
+    [Parameter] public bool IsImport { get; set; } = false;
+
+    private ModelFluentValidator _validationRules;
+
+    private const string DefaultDragClass = "relative rounded-lg border-2 border-dashed pa-4 mt-4 mud-width-full mud-height-full z-10";
+    private string _dragClass = DefaultDragClass;
+
+    private bool _isValid;
+    private bool _isTouched;
+
+    protected override Task OnInitializedAsync()
+    {
+        _validationRules = new(ImportModel);
+        return base.OnInitializedAsync();
+    }
+
+    private async Task Upload()
+    {
+        await ImportModel.UploadCallBack.InvokeAsync(ImportModel);
+        Cancel();
+    }
+
+    private void OnInputFileChanged(InputFileChangeEventArgs e)
+    {
+        ClearDragClass();
+        ImportModel.File = e.File;
+    }
+
+    private void SetDragClass()
+        => _dragClass = $"{DefaultDragClass} mud-border-primary";
+
+    private void ClearDragClass()
+        => _dragClass = DefaultDragClass;
+
+    public class ModelFluentValidator : AbstractValidator<ImportFileModel>
+    {
+        public ModelFluentValidator(ImportFileModel importFileModel)
+        {
+            RuleFor(x => x.File)
+                .NotEmpty()
+                .WithMessage("Você deve inserir 1 arquivo");
+
+            RuleFor(x => x.File).Must((model, file) =>
+            {
+                if (!file.Name.EndsWith($".{importFileModel.Extension}"))
+                {
+                    return false;
+                }
+
+                return true;
+            }).When(f => f.File != null && !string.IsNullOrEmpty(f.File.Name)).WithMessage($"O arquivo inserido deve ser do formato {importFileModel.Extension}");
+        }
+
+        public Func<object, string, Task<IEnumerable<string>>> ValidateValue => async (model, propertyName) =>
+        {
+            var result = await ValidateAsync(ValidationContext<ImportFileModel>.CreateWithOptions((ImportFileModel)model, x => x.IncludeProperties(propertyName)));
+            return result.IsValid ? Array.Empty<string>() : result.Errors.Select(e => e.ErrorMessage);
+        };
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

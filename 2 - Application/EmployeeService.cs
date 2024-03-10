@@ -35,6 +35,7 @@ public class EmployeeService : BaseService<Employee>
     {
         return await _repository.GetAllByAssessment(ids);
     }
+
     public async Task<Employee> GetByRG(string rg)
     {
         return await _repository.GetByRG(rg);
@@ -97,19 +98,19 @@ public class EmployeeService : BaseService<Employee>
             _notificationsService.RemoveNotification(notification);
             _notificationsService.AddNotification($"O Relatório em Excel de Funcionários foi gerado com sucesso!");
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            _notificationsService.AddNotification("Não foi possível exportar o Relatório de Funcionários! Contate o Suporte.");
+            var erroMessage = "Não foi possível exportar o Relatório de Funcionários! Contate o Suporte.";
+            _notificationsService.AddNotification(erroMessage);
+            await _emailService.SendErrorToSupport(ex, erroMessage);
         }
     }
 
     public async Task ImportEmployeesByExcel(string fullPath, string processId)
     {
-        var tempFilePath = Path.GetTempPath() + Path.GetFileName(fullPath);
         Notification notification = null;
         try
         {
-            File.Copy(fullPath, tempFilePath, true);
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
 
             using var package = new ExcelPackage(new FileInfo(fullPath));
@@ -121,7 +122,7 @@ public class EmployeeService : BaseService<Employee>
             notification = new Notification($"A importação de Funcionários está sendo processada", Convert.ToDouble(totalRows), processId);
             _notificationsService.AddNotification(notification);
 
-            var importModel = new ImportDataModel(Path.GetFileName(fullPath));
+            var importModel = new ImportNotificationModel(Path.GetFileName(fullPath));
 
             var positions = (await _positionRepository.GetAll()).ToList();
             for (int row = startRow; row <= totalRows; row++)
@@ -179,7 +180,9 @@ public class EmployeeService : BaseService<Employee>
             if (notification != null)
                 _notificationsService.RemoveNotification(notification);
 
-            _notificationsService.AddNotification("Não foi possível exportar o Relatório de Funcionários! Contate o Suporte.");
+            var erroMessage = "Não foi possível importar os Funcionários! Contate o Suporte.";
+            _notificationsService.AddNotification(erroMessage);
+            await _emailService.SendErrorToSupport(ex, erroMessage);
         }
     }
 }

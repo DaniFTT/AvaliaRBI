@@ -50,7 +50,7 @@ public class NotificationsService
 
                     if(parts.Length == 5)
                     {
-                        notification.ImportModel = JsonConvert.DeserializeObject<ImportDataModel>(parts[4]);
+                        notification.ImportModel = JsonConvert.DeserializeObject<ImportNotificationModel>(parts[4]);
                     }
 
                     Notifications.Add(notification);
@@ -128,7 +128,7 @@ public class Notification
     public NotificationType Type { get; set; }
 
     public ProcessingModel Processing { get; set; }
-    public ImportDataModel ImportModel { get; set; }
+    public ImportNotificationModel ImportModel { get; set; }
 
     public Notification(string message, NotificationType type)
     {
@@ -152,7 +152,7 @@ public class Notification
         };
     }
 
-    public Notification(ImportDataModel importModel)
+    public Notification(ImportNotificationModel importModel)
     {
         importModel.FinishDate = DateTime.Now;
 
@@ -243,7 +243,7 @@ public class Notification
         }
     }
 
-    public class ImportDataModel
+    public class ImportNotificationModel
     {
         public string FileName { get; set; }
         public int ProcessedCount { get; set; }
@@ -259,12 +259,12 @@ public class Notification
             Notas.Add(new NotaModel(linha, message, type));
         }
 
-        public ImportDataModel()
+        public ImportNotificationModel()
         {
             
         }
 
-        public ImportDataModel(string fileName)
+        public ImportNotificationModel(string fileName)
         {
             FileName = fileName;
         }

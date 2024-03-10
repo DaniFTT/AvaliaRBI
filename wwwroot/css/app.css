@@ -98,6 +98,11 @@ a, .btn-link {
     }
 }
 
+.person-button span.mud-icon-root.mud-icon-size-small.fas.fa-plus {
+    font-size: 12px;
+    margin-right: 5px;
+}
+
 .ellipsis, label.mud-input-label.mud-input-label-animated.mud-input-label-text.mud-input-label-margin-dense.mud-input-label-inputcontrol {
     white-space: nowrap;
     overflow: hidden;

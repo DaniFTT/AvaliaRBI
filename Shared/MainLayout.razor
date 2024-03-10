@@ -52,7 +52,7 @@
                                     <div class="d-flex" style="align-items: center;">
                                         @if (notification.ImportModel != null)
                                         {
-                                            <MudIconButton Style="margin-right:8px" Color="@notification.GetColor()" Icon="@Icons.Material.Filled.FileOpen" Size="Size.Small" aria-label="Detalhes" OnClick="async() => await seeImportDetails(notification)"></MudIconButton>
+                                            <MudIconButton Style="margin-right:8px" Color="@notification.GetColor()" Icon="@Icons.Material.Filled.FileOpen" Size="Size.Small" aria-label="Detalhes" OnClick="async() => await SeeImportDetails(notification)"></MudIconButton>
 
                                         }
                                         <div class="d-flex flex-column" style="width: 100%; max-width: 560px;">
@@ -109,10 +109,13 @@
         <NavMenu />
     </MudDrawer>
     <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Fixed="true" Style="padding-top: 1.5rem; padding-bottom: 1.5rem;">
+        <MudContainer Fixed="true" Style="padding-top: 1.5rem; padding-bottom: 1.5rem; max-width: 100%;">
             @Body
         </MudContainer>
     </MudMainContent>
+    <MudScrollToTop>
+        <MudFab Color="Color.Tertiary" StartIcon="@Icons.Material.Filled.ArrowCircleUp" />
+    </MudScrollToTop>
 </MudLayout>
 
 @code {
@@ -151,10 +154,10 @@
         StateHasChanged();
     }
 
-    public async Task seeImportDetails(Notification notification)
+    public async Task SeeImportDetails(Notification notification)
     {
         var parameters = new DialogParameters();
-        parameters.Add("ImportModel", notification.ImportModel);
+        parameters.Add("ImportNotificationModel", notification.ImportModel);
 
         DialogOptions options = new DialogOptions() {
             MaxWidth = MaxWidth.Medium, 
@@ -162,7 +165,7 @@
             CloseButton = true
         };
 
-        var dialogResult = await DialogService.Show<ImportModelDialog>("Detalhes da Importação", parameters, options).Result;
+        var dialogResult = await DialogService.Show<ImportFileDialog>("Detalhes da Importação", parameters, options).Result;
     }
 
     public void Dispose()

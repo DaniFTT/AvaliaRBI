@@ -13,19 +13,35 @@
 <ResetDbComponent OnRestDb="ResetDb" Name="AssessmentCollection"/>
 
 <MudTabs Elevation="0" ApplyEffectsToContainer="true" Rounded="true" PanelClass="pt-2">
-    <MudTabPanel Text="Parametros de Avaliação" Style="font-size: 0.8rem" ToolTip="AvaliationParameters">
+    <MudTabPanel Text="Critérios de Avaliação" Style="font-size: 0.8rem" ToolTip="AvaliationParameters">
+
+        <MudCard Style="margin-top: 0.5rem;margin-bottom: 1rem; padding:1rem 1rem 1rem 1.5rem">
+            <MudGrid Style="align-items: center;">
+                <MudItem xs="12" Style="padding-bottom: 0;">
+                    <MudText Typo="Typo.h6" Style="font-size: 1rem">
+                        Filtros
+                    </MudText>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudTextField @bind-Value="_searchString" Placeholder="Pesquisar" Adornment="Adornment.Start" Immediate="true"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0 mb-5"></MudTextField>
+                </MudItem>
+                <MudItem xs="6" Style="    text-align: right;">
+                    <MudButton Class="person-button" Variant="Variant.Filled" StartIcon="fas fa-plus" IconSize="Size.Small" Color="Color.Primary" Size="Size.Small" Style="width:fit-content;margin-right: 0.5rem;  font-size: 0.7rem" OnClick="() => CreateCollection()">Criar</MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudCard>
 
         <MudDataGrid T="AssessmentCollection" @ref="grid" Items="@collections" DragDropColumnReordering="MudGridConstants.DragDropReorderingEnabled" ColumnsPanelReordering="MudGridConstants.ColumnsPanelReorderingEnabled"
                      ColumnResizeMode="MudGridConstants.ResizeMode" Hideable="MudGridConstants.Hideable" Filterable="MudGridConstants.Filterable" QuickFilter="@_quickFilter" Groupable="MudGridConstants.Groupable"
-                     FilterMode="@MudGridConstants.FilterMode" FilterCaseSensitivity="MudGridConstants.FilterCaseSensitivity" ShowMenuIcon="true" FixedHeader="true" Height="65vh"
-                     Hover="true" Dense="true" Bordered="false" Style="padding-top: 0.8rem">
+                     FilterMode="@MudGridConstants.FilterMode" FilterCaseSensitivity="MudGridConstants.FilterCaseSensitivity" ShowMenuIcon="true" FixedHeader="true"
+                     Hover="true" Dense="true" Bordered="false">
 
             <ToolBarContent>
-                <MudTextField @bind-Value="_searchString" Placeholder="Pesquisar" Adornment="Adornment.Start" Immediate="true"
-                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0 mb-5"></MudTextField>
+                <MudText Typo="Typo.h6" Style="font-size: 1rem">
+                    Critérios de Avaliação
+                </MudText>
                 <MudSpacer />
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Style="width:10%; margin-right: 2rem; font-size: 0.7rem" OnClick="() => CreateCollection()">Adicionar Critérios</MudButton>
-
             </ToolBarContent>
 
             <Columns>

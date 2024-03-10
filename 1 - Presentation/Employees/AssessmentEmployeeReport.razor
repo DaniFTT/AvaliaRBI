@@ -106,14 +106,6 @@
                 </MudCardContent>
             </MudCard>
         </MudItem>
-@*        <MudItem xs="6" Style="padding-bottom: 0;     padding-top: 0;width: 100%">
-                <MudCard Style="height: 4rem;" Elevation="4">
-                    <MudCardContent Style="padding: 12px;">
-                    <MudText Typo="Typo.body2" Style="font-size: 0.8rem;  font-family: Roboto, Helvetica, Arial">Competência</MudText>
-                    <MudText Style="font-size: 1rem;  font-family: Roboto, Helvetica, Arial">@(assessment.ReferenceDate.HasValue ? GetFormatedDate(assessment.ReferenceDate.Value) : string.Empty)</MudText>
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>*@
         <MudItem xs="6" Style="padding-bottom: 0;     padding-top: 0;width: 100%">
                 <MudCard Style="height: 4rem;" Elevation="4">
                     <MudCardContent Style="padding: 12px;">
@@ -130,7 +122,14 @@
                     </MudCardContent>
                 </MudCard>
             </MudItem>
-
+        <MudItem xs="6" Style="padding-bottom: 0;     padding-top: 0; width: 100%">
+            <MudCard Style="height: 4rem;" Elevation="4">
+                <MudCardContent Style="padding: 12px;">
+                    <MudText Typo="Typo.body2" Style="font-size: 0.8rem;  font-family: Roboto, Helvetica, Arial">Setor</MudText>
+                    <MudText Style="font-size: 1rem;  font-family: Roboto, Helvetica, Arial">@employee.Position.Department.Sector.Name</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
 
             <MudDivider DividerType="DividerType.Middle" Class="my-1" Style="width: 690px; color: rgb(42 42 52 / 30%)" />
 
@@ -200,13 +199,11 @@
                             <col style="width:15%; padding-bottom:0.3rem; border-bottom: 1px solid rgb(42 42 52 / 22%) !important; background-color: #fff !important; color: rgb(42 42 52) !important;" />
                             <col style="width:15%; padding-bottom:0.3rem; border-bottom: 1px solid rgb(42 42 52 / 22%) !important; background-color: #fff !important; color: rgb(42 42 52) !important;" />
                             <col style="width:15%; padding-bottom:0.3rem; border-bottom: 1px solid rgb(42 42 52 / 22%) !important; background-color: #fff !important; color: rgb(42 42 52) !important;" />
-                            <col style="width:15%; padding-bottom:0.3rem; border-bottom: 1px solid rgb(42 42 52 / 22%) !important; background-color: #fff !important; color: rgb(42 42 52) !important;" />
                         </ColGroup>
                         <HeaderContent>
                             <MudTh Style="padding-bottom:0.3rem;  border-bottom: 1px solid rgb(42 42 52 / 22%) !important; background-color: #fff !important; color: rgb(42 42 52) !important;">Nome</MudTh>
                             <MudTh Style="padding-bottom:0.3rem;  border-bottom: 1px solid rgb(42 42 52 / 22%) !important; background-color: #fff !important; color: rgb(42 42 52) !important;">Valor</MudTh>
                             <MudTh Style="padding-bottom:0.3rem;  border-bottom: 1px solid rgb(42 42 52 / 22%) !important; background-color: #fff !important; color: rgb(42 42 52) !important;">Limite</MudTh>
-                            <MudTh Style="padding-bottom:0.3rem; border-bottom: 1px solid rgb(42 42 52 / 22%) !important; background-color: #fff !important; color: rgb(42 42 52) !important;">Tendência</MudTh>
                             <MudTh Style="padding-bottom:0.3rem;  border-bottom: 1px solid rgb(42 42 52 / 22%) !important; background-color: #fff !important; color: rgb(42 42 52) !important;">Desempenho</MudTh>
                         </HeaderContent>
                         <GroupHeaderTemplate>
@@ -216,7 +213,6 @@
                                 <MudTd DataLabel="Name" Style="font-size: 0.9rem; padding-top: 0.2rem; padding-bottom: 0.4rem; border-bottom: 1px solid rgb(42 42 52 / 22%) !important;background-color: #fff !important; color: rgb(42 42 52) !important;">@context.Name</MudTd>
                                 <MudTd DataLabel="Value" Style="font-size: 0.9rem; padding-top: 0.2rem; padding-bottom: 0.4rem; border-bottom: 1px solid rgb(42 42 52 / 22%) !important;background-color: #fff !important; color: rgb(42 42 52) !important;">@context.GetValue()</MudTd>
                                 <MudTd DataLabel="LimitValue" Style="font-size: 0.9rem; padding-top: 0.2rem; padding-bottom: 0.4rem; border-bottom: 1px solid rgb(42 42 52 / 22%) !important;background-color: #fff !important; color: rgb(42 42 52) !important;">@context.GetLimitValue()</MudTd>
-                                <MudTd DataLabel="IsPositive" Style="font-size: 0.9rem; padding-top: 0.2rem; padding-bottom: 0.4rem; border-bottom: 1px solid rgb(42 42 52 / 22%) !important;background-color: #fff !important; color: rgb(42 42 52) !important;">@(context.IsPositive ? "Positiva" : "Negativa")</MudTd>
                                 <MudTd DataLabel="Perfomance" Style="font-size: 0.9rem; padding-top: 0.2rem; padding-bottom: 0.4rem; border-bottom: 1px solid rgb(42 42 52 / 22%) !important;background-color: #fff !important; color: rgb(42 42 52) !important;">@(context.Performance.ToString("F2") + " %")</MudTd>
                             </RowTemplate>
                         </MudTable>
