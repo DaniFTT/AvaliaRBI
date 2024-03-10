@@ -696,7 +696,6 @@
 
     private async Task SeeAssessmentEmployeeDetails(Employee employee)
     {
-
         var assessmentExist = await MonthlyAssessmentService.GetById(assessment.Id);
         if(assessmentExist == null)
         {

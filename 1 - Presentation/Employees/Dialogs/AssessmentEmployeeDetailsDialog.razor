@@ -83,8 +83,7 @@
         }
         catch (Exception e)
         {
-            Console.WriteLine("Erro: " + e.Message);
-            Snackbar.Add($"Erro ao gerar PDF! Entre em contato com o suporte", MudBlazor.Severity.Error);
+            await DialogService.ShowError($"Erro ao gerar PDF! Entre em contato com o suporte", obj: new { Assessment, Employee });
         }
 
         _processing = false;
