@@ -42,7 +42,16 @@
             @if (!isReadonly)
             {
                 <MudButton OnClick="Cancel">Cancelar</MudButton>
-                <MudButton Color="Color.Success" OnClick="SaveSector">Salvar</MudButton>
+                <MudButton Disabled="@_processing" Color="Color.Success" OnClick="SaveSector">
+                    @if (_processing)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    }
+                    else
+                    {
+                        <MudText>Salvar</MudText>
+                    }
+                </MudButton>
             }
             @if (isReadonly)
             {
@@ -65,6 +74,8 @@
 
     SectorCommandValidator sectorValidator = null;
 
+    private bool _processing = false;
+
     private void Cancel()
     {
         MudDialog.Cancel();
@@ -77,6 +88,8 @@
 
     private async Task SaveSector()
     {
+        _processing = true;
+
         await form.Validate();
         if (!form.IsValid)
             return;
@@ -99,7 +112,7 @@
                 return;
             }
 
-            await DialogService.ShowError("Não foi possivel atualizar esse Setor! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+            await DialogService.ShowError("Não foi possivel atualizar esse Setor! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: newSector);
 
             return;
         }
@@ -113,7 +126,9 @@
             return;
         }
 
-        await DialogService.ShowError("Não foi possivel criar esse Setor! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+        _processing = true;
+
+        await DialogService.ShowError("Não foi possivel criar esse Setor! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: newSector);
     }
 
     internal class SectorCommandValidator : AbstractValidator<Sector>

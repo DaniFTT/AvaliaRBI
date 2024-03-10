@@ -422,7 +422,7 @@
         }
         catch (Exception e)
         {
-            await DialogService.ShowError("Houve um erro ao tentarmos Adicionar um Aspecto! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+            await DialogService.ShowError("Houve um erro ao tentarmos Adicionar um Aspecto! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", e);
 
             throw;
         }
@@ -442,7 +442,7 @@
         }
         catch (Exception e)
         {
-            await DialogService.ShowError("Houve um erro ao tentarmos Remover esse Aspecto! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+            await DialogService.ShowError("Houve um erro ao tentarmos Remover esse Aspecto! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", e);
 
             throw;
         }
@@ -534,7 +534,7 @@
                 return;
             }
 
-            await DialogService.ShowError("Não foi possivel atualizar esses Critérios! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+            await DialogService.ShowError("Não foi possivel atualizar esses Critérios! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: newCollection);
             return;
         }
 
@@ -547,7 +547,7 @@
             return;
         }
 
-        await DialogService.ShowError("Não foi possivel criar esses Critérios! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+        await DialogService.ShowError("Não foi possivel criar esses Critérios! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: newCollection);
     }
 
     internal class AssessmentCollectionValidator : AbstractValidator<AssessmentCollection>

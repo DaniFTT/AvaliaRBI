@@ -50,7 +50,16 @@
             @if (!isReadonly)
             {
                 <MudButton OnClick="Cancel">Cancelar</MudButton>
-                <MudButton Color="Color.Success" OnClick="SavePosition">Salvar</MudButton>
+                <MudButton Disabled="@_processing" Color="Color.Success" OnClick="SavePosition">
+                    @if (_processing)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    }
+                    else
+                    {
+                        <MudText>Salvar</MudText>
+                    }
+                </MudButton>
             }
             @if (isReadonly)
             {
@@ -75,7 +84,7 @@
     private List<Department> departments = new List<Department>();
 
     PositionCommandValidator positionValidator = null;
-
+    private bool _processing = false;
     private void Cancel()
     {
         MudDialog.Cancel();
@@ -89,6 +98,7 @@
 
     private async Task SavePosition()
     {
+        _processing = true;
         await form.Validate();
         if (!form.IsValid)
             return;
@@ -113,7 +123,7 @@
                 return;
             }
 
-            await DialogService.ShowError("Não foi possivel atualizar esse Cargo! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+            await DialogService.ShowError("Não foi possivel atualizar esse Cargo! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: newPosition);
 
             return;
         }
@@ -129,7 +139,8 @@
             return;
         }
 
-        await DialogService.ShowError("Não foi possivel criar esse Cargo! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+        _processing = false;
+        await DialogService.ShowError("Não foi possivel criar esse Cargo! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: newPosition);
     }
 
     internal class PositionCommandValidator : AbstractValidator<PositionJob>

@@ -30,9 +30,10 @@ public class Employee : BaseEntity
         Position = new PositionJob();
     }
 
-    public Employee(string name, DateTime admissionDate, PositionJob position)
+    public Employee(string name, string rg, DateTime admissionDate, PositionJob position)
     {
         Name = name.Trim();
+        RG = rg;
         AdmissionDate = admissionDate;
         PositionId = position.Id;
         Position = position;

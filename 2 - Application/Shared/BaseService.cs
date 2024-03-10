@@ -1,24 +1,34 @@
-﻿
-using Ardalis.Result;
+﻿using Ardalis.Result;
+using AvaliaRBI._2___Application.Shared;
+using Newtonsoft.Json;
 
 namespace AvaliaRBI._3___Domain.Abstractions
 {
     public abstract class BaseService<T> : IBaseService<T> where T : BaseEntity, new()
     {
         private IBaseRepository<T> _repository;
-        public BaseService(IBaseRepository<T> repository)
+        protected EmailService _emailService;
+        public BaseService(IBaseRepository<T> repository, EmailService emailService)
         {
             _repository = repository;
+            _emailService = emailService;
         }
 
         public virtual async Task<Result<T>> GetById(int id)
         {
-            var result = await _repository.GetById(id);
+            try
+            {
+                var result = await _repository.GetById(id);
 
-            if (result != null)
-                return Result<T>.Success(result);
+                if (result != null)
+                    return Result<T>.Success(result);
 
-            return Result<T>.NotFound("Registro não encontrado!");
+                return Result<T>.NotFound("Registro não encontrado!");
+            }
+            catch (Exception e)
+            {
+                return Result<T>.Error("Não foi possível obter esse registro!");
+            }
         }
 
         public virtual async Task<IEnumerable<T>> GetAll()
@@ -27,7 +37,7 @@ namespace AvaliaRBI._3___Domain.Abstractions
             {
                 return await _repository.GetAll();
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 return Array.Empty<T>();
             }
@@ -44,7 +54,7 @@ namespace AvaliaRBI._3___Domain.Abstractions
 
                 return Result<T>.Error("Não foi possível criar esse registro!");
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 return Result<T>.Error("Não foi possível criar esse registro!");
             }
@@ -61,7 +71,7 @@ namespace AvaliaRBI._3___Domain.Abstractions
 
                 return Result<T>.Error("Não foi possível atualizar esse registro!");
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 return Result<T>.Error("Não foi possível atualizar esse registro!");
             }
@@ -80,7 +90,7 @@ namespace AvaliaRBI._3___Domain.Abstractions
 
                 return Result.Error("Não foi possível deletar esse registro!");
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 return Result.Error("Não foi possível deletar esse registro!");
             }

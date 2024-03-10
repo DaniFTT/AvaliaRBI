@@ -344,7 +344,7 @@
         assessment = IsEditable ? await MonthlyAssessmentService.GetByIdUpdated(AssessmentId.Value) : await MonthlyAssessmentService.GetById(AssessmentId.Value);
         if (assessment == null)
         {
-            await DialogService.ShowError("Houve um erro ao carregar sua Avaliação! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+            await DialogService.ShowError("Houve um erro ao carregar sua Avaliação! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: new { IsEditable = IsEditable, AssessmentId = AssessmentId });
             await OnGoBack.InvokeAsync();
         }
     }
@@ -482,7 +482,7 @@
             var deleteResult = await MonthlyAssessmentService.Delete(assessment.Id);
             if (!deleteResult.IsSuccess)
             {
-                await DialogService.ShowError("Não foi possivel salvar o Rascunho da sua Avaliação! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+                await DialogService.ShowError("Não foi possivel salvar o Rascunho da sua Avaliação! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: assessment);
                 return false; 
             }
 
@@ -511,7 +511,7 @@
 
         if (error || !assessmentResult.IsSuccess)
         {
-            await DialogService.ShowError("Não foi possivel salvar o Rascunho da sua Avaliação! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+            await DialogService.ShowError("Não foi possivel salvar o Rascunho da sua Avaliação! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: assessment);
             return false;
         }
 
@@ -582,7 +582,7 @@
             var deleteResult = await MonthlyAssessmentService.Delete(assessment.Id);
             if (!deleteResult.IsSuccess)
             {
-                await DialogService.ShowError("Não foi possivel salvar sua Avaliação! \n\nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+                await DialogService.ShowError("Não foi possivel salvar sua Avaliação! \n\nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: assessment);
                 assessment.IsClosed = false;
                 return false;
             }
@@ -612,7 +612,7 @@
 
         if (error || !assessmentResult.IsSuccess)
         {
-            await DialogService.ShowError("Não foi possivel salvar sua Avaliação! \n\nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+            await DialogService.ShowError("Não foi possivel salvar sua Avaliação! \n\nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: assessment);
             assessment.IsClosed = false;
             return false; 
         }
@@ -656,7 +656,7 @@
         var updateResult = await MonthlyAssessmentService.Update(assessment.Id, assessment);
         if(updateResult.IsSuccess)
         {
-            await DialogService.ShowError("Não foi possivel reabrir essa Avaliação! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+            await DialogService.ShowError("Não foi possivel reabrir essa Avaliação! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: assessment);
             return;
         }
 
@@ -748,7 +748,7 @@
         {
             var total = assessmentModels.SelectMany(a => a.Employees).Count();
             var notification = new Notification($"As Avaliações mensais {assessment.ReferenceDate.Value.ToString("MM/yyyy")} estão sendo baixadas", Convert.ToDouble(total), processId);
-            NotificationsService.AddProgressNotification(notification);
+            NotificationsService.AddNotification(notification);
 
             await foreach (int n in PdfService.DownloadAllMonthlyAssessments(assessment, assessmentModels.ToArray()))
             {
@@ -760,7 +760,7 @@
         }
         catch (Exception e)
         {
-            Snackbar.Add($"Erro ao salvar as Avaliações Mensais {assessment.ReferenceDate.Value.ToString("MM/yyyy")}! Entre em contato com o suporte", MudBlazor.Severity.Error);
+            await DialogService.ShowError($"Erro ao salvar as Avaliações Mensais {assessment.ReferenceDate.Value.ToString("MM/yyyy")}! Entre em contato com o suporte", e, obj: assessment);
         }
         finally
         {        

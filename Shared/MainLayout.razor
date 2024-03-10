@@ -1,4 +1,12 @@
-﻿@inherits LayoutComponentBase
+﻿@using AvaliaRBI.Shared.Dialogs;
+@using AvaliaRBI.Shared.Extensions;
+@using AvaliaRBI.Shared.Functions;
+@using AvaliaRBI._3___Domain.Models;
+@using AvaliaRBI._4___Repository;
+@using AvaliaRBI._4___Repository.Shared;
+@inject IDialogService DialogService;
+@inject ISnackbar Snackbar
+@inherits LayoutComponentBase
 
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -21,7 +29,7 @@
         <MudSpacer />
         <div class="d-flex">
 
-            <MudBadge Visible="@(NotificationsService.UnreadedNotifications > 0)" Content="@NotificationsService.UnreadedNotifications" Color="Color.Error" Overlap="true" Bordered="true">
+        <MudBadge Visible="@(NotificationsService.UnreadedNotifications > 0)" Content="@NotificationsService.UnreadedNotifications" Color="Color.Error" Overlap="true" Bordered="true">
             <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Notifications" Color="Color.Inherit" @onclick="ToggleNotifications" />
         </MudBadge>
 
@@ -37,64 +45,34 @@
                     }
                     else
                     {
-                        <MudList Class="notification-list">
+                        <MudList Class="notification-list" Dense="true">
                             @foreach (var notification in NotificationsService.Notifications)
                             {
-                                if (notification.Type == Notification.NotificationType.Success)
-                                {
+                                <MudListItem Icon="@notification.GetIcon()" IconSize="Size.Small" IconColor="@notification.GetColor()">
+                                    <div class="d-flex" style="align-items: center;">
+                                        @if (notification.ImportModel != null)
+                                        {
+                                            <MudIconButton Style="margin-right:8px" Color="@notification.GetColor()" Icon="@Icons.Material.Filled.FileOpen" Size="Size.Small" aria-label="Detalhes" OnClick="async() => await seeImportDetails(notification)"></MudIconButton>
 
-                                    <MudListItem Icon="@Icons.Material.Filled.Bookmark" IconSize="Size.Small" IconColor="MudBlazor.Color.Success">
-                                        <div class="d-flex" style="align-items: center;">
-                                            <div class="d-flex flex-column" style="width: 100%; max-width: 500px;">
-                                                <MudText Typo="Typo.body2">@notification.Message</MudText>
-                                                <MudText Typo="Typo.caption" Style="    font-size: 0.6rem;">@notification.DateTime.ToString("HH:mm")</MudText>
+                                        }
+                                        <div class="d-flex flex-column" style="width: 100%; max-width: 560px;">
 
-                                            </div>
-                                            <MudIconButton Style="margin-left:10px" Icon="@Icons.Material.Filled.Close" Size="Size.Small" aria-label="delete" OnClick="() => NotificationsService.RemoveNotification(notification)"></MudIconButton>
-                                        </div>
-                                    </MudListItem>
-                                }
-                                else if (notification.Type == Notification.NotificationType.Error)
-                                {
 
-                                    <MudListItem Icon="@Icons.Material.Filled.Error" IconSize="Size.Small" IconColor="MudBlazor.Color.Error">
-                                        <div class="d-flex" style="align-items: center;">
-                                            <div class="d-flex flex-column" style="width: 100%; max-width: 500px;">
-                                                <MudText Typo="Typo.body2">@notification.Message</MudText>
-                                                <MudText Typo="Typo.caption" Style="    font-size: 0.6rem;">@notification.DateTime.ToString("HH:mm")</MudText>
-
-                                            </div>
-                                            <MudIconButton Style="margin-left:10px" Icon="@Icons.Material.Filled.Close" Size="Size.Small" aria-label="delete" OnClick="() => NotificationsService.RemoveNotification(notification)"></MudIconButton>
-                                        </div>
-                                    </MudListItem>
-                                }
-                                else if (notification.Type == Notification.NotificationType.Warning)
-                                {
-
-                                    <MudListItem Icon="@Icons.Material.Filled.Warning" IconSize="Size.Small" IconColor="MudBlazor.Color.Warning">
-                                        <div class="d-flex" style="align-items: center;">
-                                            <div class="d-flex flex-column" style="width: 100%; max-width: 500px;">
-                                                <MudText Typo="Typo.body2">@notification.Message</MudText>
-                                                <MudText Typo="Typo.caption" Style="    font-size: 0.6rem;">@notification.DateTime.ToString("HH:mm")</MudText>
-
-                                            </div>
-                                            <MudIconButton Style="margin-left:10px" Icon="@Icons.Material.Filled.Close" Size="Size.Small" aria-label="delete" OnClick="() => NotificationsService.RemoveNotification(notification)"></MudIconButton>
-                                        </div>
-                                    </MudListItem>
-                                }
-                                else
-                                {
-                                    <MudListItem Icon="@Icons.Material.Filled.Downloading" IconSize="Size.Small" IconColor="MudBlazor.Color.Primary">
-                                        <div class="d-flex" style="align-items: center;">
-                                            <div class="d-flex flex-column" style="width: 100%; max-width: 500px;">
-                                                <MudText Typo="Typo.body2">@notification.Message</MudText>
+                                            <MudText Typo="Typo.body2">@notification.Message</MudText>
+                                            @if (notification.Type == Notification.NotificationType.Processing)
+                                            {
                                                 <MudProgressLinear Color="Color.Primary" Value="@notification.Processing.GetPercentage()" Max="100" Class="my-2" />
-                                            </div>
-                                            <MudIconButton Style="margin-left:10px" Icon="@Icons.Material.Filled.Close" Size="Size.Small" aria-label="delete" OnClick="() => NotificationsService.RemoveNotification(notification)"></MudIconButton>
-                                        </div>
-                                    </MudListItem>
 
-                                }
+                                            }
+                                            else
+                                            {
+                                                <MudText Typo="Typo.caption" Style=" font-size: 0.6rem;">@notification.DateTime.ToString("HH:mm")</MudText>
+                                            }
+
+                                        </div>
+                                        <MudIconButton Style="margin-left:10px" Icon="@Icons.Material.Filled.Close" Size="Size.Small" aria-label="delete" OnClick="() => NotificationsService.RemoveNotification(notification)"></MudIconButton>
+                                    </div>
+                                </MudListItem>
                             }
                         </MudList>
 
@@ -106,7 +84,24 @@
 
 
         </div>
-        <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
+        <div class="d-flex">
+            <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" @onclick="ToggleOptions" />
+            <MudPopover OverflowBehavior="OverflowBehavior.FlipNever" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopRight" Open="_isOptionsPopoverOpen" MaxHeight="300" Class="overflow-y-auto">
+                <MudPaper Style="max-height: 300px" Class="overflow-y-auto">
+                <MudList Class="notification-list" Dense="true" Clickable="true">
+                    <MudListItem OnClick="() => ExportData()">
+                        Exportar Dados
+                    </MudListItem>
+                    <MudListItem OnClick="async () => await ImportData()">
+                        Importar Dados
+                    </MudListItem>
+                    <MudListItem OnClick="() => SendDbToSupport()">
+                        Enviar Dados ao suporte
+                    </MudListItem>
+                </MudList>
+                </MudPaper>
+            </MudPopover>
+        </div>
         <MudSwitch @bind-Checked="@ThemeConstants._isDarkMode" Color="Color.Primary" Class="ml-2" T="bool" title="Modo Claro/Escuro" />
 
     </MudAppBar>
@@ -130,6 +125,7 @@
     }
 
     private bool _isNotificationsPopoverOpen = false;
+    private bool _isOptionsPopoverOpen = false;
 
 
     private void ToggleNotifications()
@@ -138,6 +134,11 @@
             NotificationsService.UpdateNotificationsReaded();
 
         _isNotificationsPopoverOpen = !_isNotificationsPopoverOpen;
+    }
+
+    private void ToggleOptions()
+    {
+        _isOptionsPopoverOpen = !_isOptionsPopoverOpen;
     }
 
     protected override void OnInitialized()
@@ -150,9 +151,84 @@
         StateHasChanged();
     }
 
+    public async Task seeImportDetails(Notification notification)
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("ImportModel", notification.ImportModel);
+
+        DialogOptions options = new DialogOptions() {
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true,
+            CloseButton = true
+        };
+
+        var dialogResult = await DialogService.Show<ImportModelDialog>("Detalhes da Importação", parameters, options).Result;
+    }
+
     public void Dispose()
     {
         NotificationsService.OnNotificationsChanged -= NotificationsChanged;
+    }
+
+    public void ExportData()
+    {
+        try
+        {
+            DataModel.ExportData();
+            Snackbar.Add("Banco de dados exportado com sucesso", Severity.Success);
+        }
+        catch (Exception e)
+        {
+            Snackbar.Add($"Erro ao exportar o banco de dados: {e.Message}", Severity.Error);
+        }
+    }
+
+    public async Task SendDbToSupport()
+    {
+        try
+        {
+            var emailModel = new EmailModel()
+            {
+                ToEmail = "daniel.s.6140@gmail.com",
+                Subject = $"Banco de Dados Avalia RBI {DateTime.Now.ToString("dd / MM / yyyy HH:mm: ss")}",
+                Content = $"Segue o banco de dados atualizado: {DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")}",
+                File = new _3___Domain.Models.FileInfo()
+                {
+                    FileName = "AvaliaRBI",
+                    Extension = "db3",
+                    FileBytes = DataModel.GetDbFile()
+                },
+                Format = MimeKit.Text.TextFormat.Text
+            };
+
+            await EmailService.SendEmailAsync(emailModel);
+            Snackbar.Add("Banco de dados enviado com sucesso", Severity.Success);
+        }
+        catch (Exception e)
+        {
+            Snackbar.Add($"Erro ao enviar o banco de dados", Severity.Error);
+        }
+    }
+
+    public async Task ImportData()
+    {
+        try
+        {
+            var parameters = new DialogParameters
+            {
+                { "Color", Color.Warning }
+            };
+            var result = await DialogService.ShowQuestion("Atencão!", "Tem certeza de que deseja importar um banco de dados? todos os dados da sua aplicação serão substituidos por essa nova base de dados!", parameters);
+
+            if (!result.Canceled)
+                await DataModel.ImportData();
+
+            Snackbar.Add("Banco de dados importado com sucesso", Severity.Success);
+        }
+        catch (Exception e)
+        {
+            Snackbar.Add($"Erro ao importar o banco de dados: {e.Message}", Severity.Error);
+        }
     }
 
     MudTheme MyCustomTheme = new MudTheme()

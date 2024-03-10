@@ -1,4 +1,5 @@
-﻿using AvaliaRBI._3___Domain;
+﻿using AvaliaRBI._2___Application.Shared;
+using AvaliaRBI._3___Domain;
 using AvaliaRBI._3___Domain.Abstractions;
 using AvaliaRBI._3___Domain.Enum;
 using AvaliaRBI._4___Repository;
@@ -8,7 +9,7 @@ namespace AvaliaRBI._2___Application;
 public class AssessmentEmployeeService : BaseService<AssessmentEmployee>
 {
     private AssessmentEmployeeRepository _repository;
-    public AssessmentEmployeeService(IBaseRepository<AssessmentEmployee> repository) : base(repository)
+    public AssessmentEmployeeService(IBaseRepository<AssessmentEmployee> repository, EmailService emailService) : base(repository, emailService)
     {
         _repository = new AssessmentEmployeeRepository();
     }

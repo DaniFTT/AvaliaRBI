@@ -2,6 +2,7 @@
 
 @using System.Net.Http.Json
 @using Ardalis.Result;
+@using AvaliaRBI.Shared.Dialogs;
 @using AvaliaRBI.Shared.Functions
 @using AvaliaRBI._1___Presentation.Employees.Dialogs;
 @using AvaliaRBI._2___Application;
@@ -21,10 +22,11 @@
                      Hover="true" Dense="true" Bordered="false" Style="padding-top: 0.8rem">
 
             <ToolBarContent>
-                <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                <MudTextField @bind-Value="_searchString" Placeholder="Pesquisar" Adornment="Adornment.Start" Immediate="true"
                               AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0 mb-5"></MudTextField>
                 <MudSpacer />
-                <MudButton Variant="Variant.Outlined"  Color="Color.Primary" Size="Size.Small" Style="width:16%; margin-right: 2rem; font-size: 0.7rem" OnClick="() => ExportToExcel()">Exportar Funcionários</MudButton>
+                <MudButton Variant="Variant.Outlined"  Color="Color.Primary" Size="Size.Small" Style="width:16%; margin-right: 2rem; font-size: 0.7rem" OnClick="() => ImportByExcel()">Importar</MudButton>
+                <MudButton Variant="Variant.Outlined"  Color="Color.Primary" Size="Size.Small" Style="width:16%; margin-right: 2rem; font-size: 0.7rem" OnClick="() => ExportToExcel()">Exportar</MudButton>
 
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Style="width:16%; margin-right: 2rem; font-size: 0.7rem" OnClick="() => CreateEmployee()">Criar Funcionário</MudButton>
 
@@ -47,7 +49,10 @@
                 </TemplateColumn>
             </Columns>
             <PagerContent>
-                <MudDataGridPager T="Employee" />
+                <MudDataGridPager T="Employee" PageSizeOptions="new int[]{10, 25, 50, 100}"
+                                  RowsPerPageString="Linhas por Pág."
+                                  InfoFormat="{first_item}-{last_item} de {all_items}"
+                                  />
             </PagerContent>
         </MudDataGrid>
     </MudTabPanel>
@@ -188,5 +193,36 @@
         }
 
         await EmployeeService.ExportEmployeesToExcel(processId);
+    }
+
+    private async Task ImportByExcel()
+    {
+        var processId = $"import-excel-{nameof(Employee)}";
+        if (NotificationsService.ProcessAlreadyRunning(processId))
+        {
+            Snackbar.Add($"Esse relatório já está em andamento, verifique suas notificações para acompanhar o progresso", MudBlazor.Severity.Error);
+            return;
+        }
+
+        var filePickerOptions = new PickOptions
+        {
+            PickerTitle = "Por favor, selecione o arquivo Excel para importar",        
+        };
+
+        var result = await FilePicker.Default.PickAsync(filePickerOptions);
+
+        if (result != null)
+        {
+            try
+            {
+                await EmployeeService.ImportEmployeesByExcel(result.FullPath, processId);
+                employees = (await EmployeeService.GetAll()).ToList();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Falha ao importar arquivo: {ex.Message}", MudBlazor.Severity.Error);
+            }
+        }
+
     }
 }

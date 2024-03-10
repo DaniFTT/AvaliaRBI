@@ -1,4 +1,5 @@
 ﻿using AvaliaRBI._3___Domain.Models;
+using AvaliaRBI.Shared.Extensions;
 using MimeKit.Text;
 using System;
 using System.Collections.Generic;
@@ -10,15 +11,11 @@ namespace AvaliaRBI._2___Application.Shared;
 
 public class ExcelService
 {
-    private readonly string downloadPath;
     private EmailService EmailService;
     private NotificationsService NotificationsService;
 
     public ExcelService(EmailService emailService, NotificationsService notificationsService)
     {
-        string pathUser = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        this.downloadPath = Path.Combine(pathUser, "Downloads\\");
-
         EmailService = emailService;
         NotificationsService = notificationsService;
     }
@@ -27,7 +24,7 @@ public class ExcelService
     {
         try
         {
-            var pdfDestPath = GetFileName(baseFileName, "xlsx");
+            var pdfDestPath = baseFileName.GetFileName("xlsx");
 
             File.WriteAllBytes(pdfDestPath, fileBytes);
 
@@ -47,20 +44,6 @@ public class ExcelService
         catch (Exception e)
         {
         }
-    }
-
-    private string GetFileName(string baseFileName, string extension, string directoryPath = null)
-    {
-        string fullPath;
-        int fileCount = 1;
-        do
-        {
-            string fileName = $"{baseFileName}{(fileCount > 1 ? $"-{fileCount}" : string.Empty)}.{extension}";
-            fullPath = Path.Combine(directoryPath ?? this.downloadPath, fileName);
-            fileCount++;
-        } while (File.Exists(fullPath));
-
-        return fullPath;
     }
 }
 

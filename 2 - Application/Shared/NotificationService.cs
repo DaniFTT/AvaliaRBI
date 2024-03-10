@@ -1,4 +1,8 @@
-﻿using static AvaliaRBI._2___Application.Shared.Notification;
+﻿using MudBlazor;
+using Newtonsoft.Json;
+using System.ComponentModel;
+using System.Text.Json.Serialization;
+using static AvaliaRBI._2___Application.Shared.Notification;
 
 namespace AvaliaRBI._2___Application.Shared;
 
@@ -39,13 +43,19 @@ public class NotificationsService
             var lines = File.ReadAllLines(_filePath);
             foreach (var line in lines)
             {
-                var parts = line.Split(new[] { " - " }, 4, StringSplitOptions.None);
-                if (parts.Length == 4 && DateTime.TryParse(parts[0], out var dateTime))
+                var parts = line.Split(new[] { " --- " }, StringSplitOptions.None);
+                if (parts.Length >= 4 && DateTime.TryParse(parts[0], out var dateTime))
                 {
                     var notification = new Notification { DateTime = dateTime, Message = parts[1], Readed = parts[2] == "true" ? true : false, Type = (NotificationType)(int.Parse(parts[3])) };
 
+                    if(parts.Length == 5)
+                    {
+                        notification.ImportModel = JsonConvert.DeserializeObject<ImportDataModel>(parts[4]);
+                    }
+
                     Notifications.Add(notification);
                 }
+                
             }
         }
     }
@@ -83,7 +93,7 @@ public class NotificationsService
         OnNotificationsChanged?.Invoke();
     }
 
-    public void AddProgressNotification(Notification notification)
+    public void AddNotification(Notification notification)
     {
         Notifications.Insert(0, notification);
         OnNotificationsChanged?.Invoke();
@@ -118,6 +128,7 @@ public class Notification
     public NotificationType Type { get; set; }
 
     public ProcessingModel Processing { get; set; }
+    public ImportDataModel ImportModel { get; set; }
 
     public Notification(string message, NotificationType type)
     {
@@ -141,13 +152,74 @@ public class Notification
         };
     }
 
+    public Notification(ImportDataModel importModel)
+    {
+        importModel.FinishDate = DateTime.Now;
+
+        Message = importModel.Title;
+        DateTime = DateTime.Now;
+        Readed = false;
+        ImportModel = importModel;
+        Type = NotificationType.Success;
+
+        if (importModel.Notas.Any(c => c.Type == NotaType.Error))
+            Type = NotificationType.Error;    
+    }   
+
     public Notification()
     {
-
     }
+
     public override string ToString()
     {
-        return $"{DateTime:yyyy-MM-dd HH:mm:ss} - {Message} - {(Readed ? "true" : "false")} - {(int)Type}";
+        var value = $"{DateTime:yyyy-MM-dd HH:mm:ss} --- {Message} --- {(Readed ? "true" : "false")} --- {(int)Type}";
+
+        if (ImportModel != null)
+        {
+            var jsonImportModel = JsonConvert.SerializeObject(ImportModel);
+            value += $" --- {jsonImportModel}";
+        }
+
+        return value;
+    }
+
+    public MudBlazor.Color GetColor()
+    {
+        switch (Type)
+        {
+            case NotificationType.Success:
+                return MudBlazor.Color.Success;
+            case NotificationType.Error:
+                return MudBlazor.Color.Error;
+            case NotificationType.Warning:
+                return MudBlazor.Color.Warning;
+            case NotificationType.Processing:
+                return MudBlazor.Color.Primary;
+        }
+
+        return MudBlazor.Color.Primary;
+    }
+
+    public string GetIcon()
+    {
+        if (ImportModel != null)
+        {
+            return "";
+        }
+
+        switch (Type)
+        {
+            case NotificationType.Success:
+                return Icons.Material.Filled.Bookmark;
+            case NotificationType.Error:
+                return Icons.Material.Filled.Error;
+            case NotificationType.Warning:
+                return Icons.Material.Filled.Warning;
+            case NotificationType.Processing:
+                return Icons.Material.Filled.Downloading;
+        }
+
+        return Icons.Material.Filled.Bookmark;
     }
 
     public enum NotificationType
@@ -169,5 +241,61 @@ public class Notification
         {
             return (CurrentValue / (float)TotalValue) * 100;
         }
+    }
+
+    public class ImportDataModel
+    {
+        public string FileName { get; set; }
+        public int ProcessedCount { get; set; }
+        public int InsertedCount { get; set; }
+        public int UpdatedCount { get; set; }
+        public DateTime FinishDate { get; set; }
+
+        public string Title { get; set; }
+        public List<NotaModel> Notas { get; set; } = new List<NotaModel>();
+
+        public void AddNota(string linha, string message, NotaType type)
+        {
+            Notas.Add(new NotaModel(linha, message, type));
+        }
+
+        public ImportDataModel()
+        {
+            
+        }
+
+        public ImportDataModel(string fileName)
+        {
+            FileName = fileName;
+        }
+
+        public bool ContainsErrors { get => Notas.Any(n => n.Type == NotaType.Error); }
+        public bool ContainsErrorsByRow(int row) => Notas.Any(n => n.Row == row.ToString() && n.Type == NotaType.Error);
+        public bool ContainsWarnings{ get => Notas.Any(n => n.Type == NotaType.Warning); }
+    }
+    public class NotaModel
+    {
+        public string Row { get; set; }
+        public string Message { get; set; }
+        public NotaType Type { get; set; }
+
+        public NotaModel(string linha, string message, NotaType type)
+        {
+            Row = linha;
+            Message = message;
+            Type = type;
+        }
+
+        public NotaModel()
+        {
+            
+        }
+    }
+    public enum NotaType
+    {
+        [Description("Aviso")]
+        Warning,
+        [Description("Erro")]
+        Error,
     }
 }

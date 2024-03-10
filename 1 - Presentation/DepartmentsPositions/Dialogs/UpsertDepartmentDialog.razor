@@ -48,7 +48,16 @@
             @if (!isReadonly)
             {
                 <MudButton OnClick="Cancel">Cancelar</MudButton>
-                <MudButton Color="Color.Success" OnClick="SaveDepartment">Salvar</MudButton>
+                <MudButton Disabled="@_processing" Color="Color.Success" OnClick="SaveDepartment">
+                    @if (_processing)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    }
+                    else
+                    {
+                        <MudText>Salvar</MudText>
+                    }
+                </MudButton>
             }
             @if (isReadonly)
             {
@@ -75,6 +84,7 @@
 
     DepartmentCommandValidator departmentValidator = null;
 
+    private bool _processing = false;
     protected override async Task OnInitializedAsync()
     {
         departmentValidator = new(DepartmentService);
@@ -88,10 +98,11 @@
 
     private async Task SaveDepartment()
     {
+        _processing = true;
+
         await form.Validate();
         if (!form.IsValid)
             return;
-
 
         var currentpDepartment = await DepartmentService.GetByName(department.Name);
         if (currentpDepartment != null && currentpDepartment.Id != department.Id)
@@ -111,7 +122,7 @@
                 return;
             }
 
-           await DialogService.ShowError("Não foi possivel atualizar esse Departamento! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+            await DialogService.ShowError("Não foi possivel atualizar esse Departamento! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: newDepartment);
 
             return;
         }
@@ -127,7 +138,9 @@
             return;
         }
 
-        await DialogService.ShowError("Não foi possivel criar esse Departamento! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+        _processing = false;
+
+        await DialogService.ShowError("Não foi possivel criar esse Departamento! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: newDepartment);
     }
 
     internal class DepartmentCommandValidator : AbstractValidator<Department>

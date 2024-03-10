@@ -67,7 +67,16 @@
             @if (!isReadonly)
             {
                 <MudButton OnClick="Cancel">Cancelar</MudButton>
-                <MudButton Color="Color.Success" OnClick="SaveEmployee">Salvar</MudButton>
+                <MudButton Disabled="@_processing" Color="Color.Success" OnClick="SaveEmployee">
+                    @if (_processing)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                    }
+                    else
+                    {
+                        <MudText>Salvar</MudText>
+                    }
+                </MudButton>
             }
 
             @if (isReadonly)
@@ -97,6 +106,8 @@
     private List<Department> departments = new List<Department>();
 
     EmployeeCommandValidator employeeValidator = null;
+
+    private bool _processing = false;
 
     private void Cancel()
     {
@@ -137,6 +148,8 @@
 
     private async Task SaveEmployee()
     {
+        _processing = true;
+
         await form.Validate();
         if (!form.IsValid)
             return;
@@ -160,7 +173,7 @@
                 return;
             }
 
-            await DialogService.ShowError("Não foi possivel atualizar esse Funcionário! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+            await DialogService.ShowError("Não foi possivel atualizar esse Funcionário! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: newEmployee);
 
             return;
         }
@@ -176,7 +189,9 @@
             return;
         }
 
-        await DialogService.ShowError("Não foi possivel criar esse Funcionário! \nTente Novamente mais tarde ou Entre em Contato com o Suporte");
+        _processing = false;
+
+        await DialogService.ShowError("Não foi possivel criar esse Funcionário! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: newEmployee);
     }
 
     internal class EmployeeCommandValidator : AbstractValidator<Employee>
