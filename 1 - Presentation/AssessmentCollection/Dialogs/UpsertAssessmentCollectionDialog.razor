@@ -130,11 +130,11 @@
                                 <MudTh></MudTh>
                             </HeaderContent>
                             <RowTemplate>
-                                <MudTd DataLabel="Name" Style="padding-bottom:0.2rem">@context.Name</MudTd>
-                                <MudTd DataLabel="CriteriaType" Style="padding-bottom:0.2rem">@(context.CriteriaType.HasValue ? @context.CriteriaType.Value.GetDescription() : string.Empty)</MudTd>
-                                    <MudTd DataLabel="IsPositive" Style="padding-bottom:0.2rem">@(context.IsPositive ? "Positiva" : "Negativa")</MudTd>
-                                    <MudTd DataLabel="LimitValue" Style="padding-bottom:0.2rem">@context.GetLimitValue()</MudTd>
-                                <MudTd DataLabel="Action" Style="padding-bottom:0.2rem">
+                                <MudTd DataLabel="Name" Style="padding-bottom:0.5rem">@context.Name</MudTd>
+                                <MudTd DataLabel="CriteriaType" Style="padding-bottom:0.5rem">@(context.CriteriaType.HasValue ? @context.CriteriaType.Value.GetDescription() : string.Empty)</MudTd>
+                                    <MudTd DataLabel="IsPositive" Style="padding-bottom:0.5rem">@(context.IsPositive ? "Positiva" : "Negativa")</MudTd>
+                                    <MudTd DataLabel="LimitValue" Style="padding-bottom:0.5rem">@context.GetLimitValue()</MudTd>
+                                <MudTd DataLabel="Action" Style="padding-bottom:0.5rem">
                                     @if (!isReadonly)
                                     {
                                         <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Class="pa-0" Title="Excluir" OnClick="@(() => DeleteCriteriaFromAspect(aspect, @context))" />

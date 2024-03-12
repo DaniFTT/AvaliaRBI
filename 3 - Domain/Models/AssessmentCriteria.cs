@@ -118,6 +118,12 @@ public class AssessmentCriteria
             default:
                 break;
         }
+
+        if (Performance > 100)
+            Performance = 100;
+
+        if (Performance < 0)
+            Performance = 0;
     }
 
 

@@ -49,4 +49,22 @@ public class Employee : BaseEntity
         RG = employee.RG;
         PhoneNumber = employee.PhoneNumber;
     }
+
+    public void UpdateEmployee(EmployeeImportModel employeeImport, PositionJob position)
+    {
+        Name = employeeImport.Name.Trim();
+        AdmissionDate = employeeImport.AdmissionDate;
+        Position = position;
+        PositionId = position.Id;
+    }
+}
+
+
+
+public class EmployeeImportModel
+{
+    public string Name { get; set; }
+    public string RG { get; set; }
+    public string PositionName { get; set; }
+    public DateTime AdmissionDate { get; set; }
 }

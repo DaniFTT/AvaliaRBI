@@ -99,7 +99,7 @@
         if (x.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             return true;
 
-        if (x.Description.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+        if (!string.IsNullOrWhiteSpace(x.Description) && x.Description.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             return true;
 
         if (x.CreatedAt.Value.ToShortDateString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))

@@ -263,6 +263,7 @@
             employees = (await EmployeeService.GetAll()).ToList();
 
             File.Delete(tempFilePath);
+            GC.Collect();
 
             Snackbar.Add($"Funcionários importados com sucesso!", MudBlazor.Severity.Success);
         }

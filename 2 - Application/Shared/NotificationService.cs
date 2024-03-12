@@ -254,7 +254,7 @@ public class Notification
         public string Title { get; set; }
         public List<NotaModel> Notas { get; set; } = new List<NotaModel>();
 
-        public void AddNota(string linha, string message, NotaType type)
+        public void AddNota(int linha, string message, NotaType type = NotaType.Error)
         {
             Notas.Add(new NotaModel(linha, message, type));
         }
@@ -279,9 +279,9 @@ public class Notification
         public string Message { get; set; }
         public NotaType Type { get; set; }
 
-        public NotaModel(string linha, string message, NotaType type)
+        public NotaModel(int linha, string message, NotaType type)
         {
-            Row = linha;
+            Row = linha.ToString();
             Message = message;
             Type = type;
         }

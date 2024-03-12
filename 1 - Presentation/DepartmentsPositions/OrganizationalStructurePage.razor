@@ -79,7 +79,7 @@
                         </MudText>
                     </MudItem>
                     <MudItem xs="6">
-                        <MudTextField @bind-Value="_searchStringSector" Placeholder="Pesquisar" Adornment="Adornment.Start" Immediate="true"
+                        <MudTextField @bind-Value="_searchStringDepartment" Placeholder="Pesquisar" Adornment="Adornment.Start" Immediate="true"
                                       AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0 mb-5"></MudTextField>
                     </MudItem>
                     <MudItem xs="6" Style="    text-align: right;">
@@ -138,7 +138,7 @@
                         </MudText>
                     </MudItem>
                     <MudItem xs="6">
-                        <MudTextField @bind-Value="_searchStringSector" Placeholder="Pesquisar" Adornment="Adornment.Start" Immediate="true"
+                        <MudTextField @bind-Value="_searchStringPosition" Placeholder="Pesquisar" Adornment="Adornment.Start" Immediate="true"
                                       AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0 mb-5"></MudTextField>
                     </MudItem>
                     <MudItem xs="6" Style="    text-align: right;">
@@ -227,16 +227,16 @@
     private string _searchStringSector;
     private Func<Sector, bool> _quickFilterSector => x =>
     {
-        if (string.IsNullOrWhiteSpace(_searchStringDepartment))
+        if (string.IsNullOrWhiteSpace(_searchStringSector))
             return true;
 
-        if (x.Name.Contains(_searchStringDepartment, StringComparison.OrdinalIgnoreCase))
+        if (x.Name.Contains(_searchStringSector, StringComparison.OrdinalIgnoreCase))
             return true;
 
-        if (x.Description.Contains(_searchStringDepartment, StringComparison.OrdinalIgnoreCase))
+        if (!string.IsNullOrWhiteSpace(x.Description) && x.Description.Contains(_searchStringSector, StringComparison.OrdinalIgnoreCase))
             return true;
 
-        if ($"{x.Name} {x.Description}".Contains(_searchStringDepartment))
+        if ($"{x.Name} {x.Description}".Contains(_searchStringSector))
             return true;
 
         return false;
@@ -337,7 +337,7 @@
             if (x.Name.Contains(_searchStringDepartment, StringComparison.OrdinalIgnoreCase))
                 return true;
 
-            if (x.Description.Contains(_searchStringDepartment, StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(x.Description) && x.Description.Contains(_searchStringDepartment, StringComparison.OrdinalIgnoreCase))
                 return true;
 
             if ($"{x.Name} {x.Description}".Contains(_searchStringDepartment))
@@ -442,7 +442,7 @@
             if (x.Name.Contains(_searchStringPosition, StringComparison.OrdinalIgnoreCase))
                 return true;
 
-            if (x.Description.Contains(_searchStringPosition, StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(x.Description) && x.Description.Contains(_searchStringPosition, StringComparison.OrdinalIgnoreCase))
                 return true;
 
             if (x.Department.Name.Contains(_searchStringPosition, StringComparison.OrdinalIgnoreCase))

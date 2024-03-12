@@ -1,4 +1,5 @@
-﻿using AvaliaRBI._2___Application.Shared;
+﻿using Ardalis.Result;
+using AvaliaRBI._2___Application.Shared;
 using AvaliaRBI._3___Domain;
 using AvaliaRBI._3___Domain.Abstractions;
 using AvaliaRBI._4___Repository;
@@ -18,8 +19,15 @@ public class MonthlyAssessmentService : BaseService<MonthlyAssessment>
         return await _repository.GetByReferenceDate(referenceDate);
     }
 
-    public async Task<MonthlyAssessment> GetByIdUpdated(int id)
+    public async Task<Result<MonthlyAssessment>> GetByIdUpdated(int id)
     {
-        return await _repository.GetByIdUpdated(id);
+        try
+        {
+            return Result<MonthlyAssessment>.Success(await _repository.GetByIdUpdated(id));
+        }
+        catch (Exception e)
+        {
+            return Result<MonthlyAssessment>.Error("Erro obter a Avaliação Mensal");
+        }
     }
 }

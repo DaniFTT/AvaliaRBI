@@ -2,10 +2,13 @@ using AvaliaRBI._2___Application.Shared;
 using AvaliaRBI._3___Domain;
 using AvaliaRBI._3___Domain.Abstractions;
 using AvaliaRBI._4___Repository;
+using AvaliaRBI.Shared.Validation;
+using DocumentFormat.OpenXml.Drawing.Spreadsheet;
 using MudBlazor;
 using OfficeOpenXml;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using static AvaliaRBI._2___Application.Shared.Notification;
 
 namespace AvaliaRBI._2___Application;
@@ -43,6 +46,32 @@ public class EmployeeService : BaseService<Employee>
 
     string[] excelHeaders = { "Nome*", "RG*", "Cargo*", "Departamento", "Setor", "Data de Admissão*" };
 
+    ExcelField<EmployeeImportModel>[] HeaderFields = new ExcelField<EmployeeImportModel>[]  
+    {
+        new ExcelField<EmployeeImportModel>(1, "Nome*", "Nome")
+            .WithRequiredRule()
+            .WithMaxLengthRule(200)
+            .SetAction((employee, value) => employee.Name = value),
+
+        new ExcelField<EmployeeImportModel>(2, "RG*", "RG")
+            .WithRequiredRule()
+            .WithMaxLengthRule(12)
+            .SetAction((employee, value) => employee.RG = value),
+
+        new ExcelField<EmployeeImportModel>(3, "Cargo*", "Cargo")
+            .WithRequiredRule()
+            .WithMaxLengthRule(200)
+            .SetAction((employee, value) => employee.PositionName = value),
+
+        new ExcelField<EmployeeImportModel>(4, "Departamento"),
+        new ExcelField<EmployeeImportModel>(5, "Setor"),
+
+        new ExcelField<EmployeeImportModel>(6, "Data de Admissão*", "Data de Admissão")
+            .WithRequiredRule()
+            .WithMaxLengthRule(10)
+            .SetAction((employee, value) => employee.AdmissionDate = DateTime.ParseExact(value, "dd/MM/yyyy", CultureInfo.GetCultureInfo("pt-BR"))),
+    };
+
     public async Task ExportEmployeesToExcel(string processId)
     {
         try
@@ -58,18 +87,31 @@ public class EmployeeService : BaseService<Employee>
             var worksheet = package.Workbook.Worksheets.Add("Funcionários");
             var currentRow = 1;
 
-            for (int i = 0; i < excelHeaders.Length; i++)
+            foreach (var field in HeaderFields)
             {
-                var name = excelHeaders[i];
-                var cell = worksheet.Cells[currentRow, i + 1];
+                var name = field.Header;
+                var cell = worksheet.Cells[currentRow, field.Col];
                 cell.Value = name;
 
                 if (name.Contains("*"))
                     cell.AddComment("Este campo é obrigatório para a inserção no sistema.", "Sistema");
 
-                if(name == "Departamento" || name == "Setor")
+                if (name == "Departamento" || name == "Setor")
                     cell.AddComment("Este campo não é obrigatório para a inserção no sistema (Será preechido a partir do Cargo Selecionado).", "Sistema");
             }
+
+            //for (int i = 0; i < excelHeaders.Length; i++)
+            //{
+            //    var name = excelHeaders[i];
+            //    var cell = worksheet.Cells[currentRow, i + 1];
+            //    cell.Value = name;
+
+            //    if (name.Contains("*"))
+            //        cell.AddComment("Este campo é obrigatório para a inserção no sistema.", "Sistema");
+
+            //    if(name == "Departamento" || name == "Setor")
+            //        cell.AddComment("Este campo não é obrigatório para a inserção no sistema (Será preechido a partir do Cargo Selecionado).", "Sistema");
+            //}
 
             foreach (var employee in employees)
             {
@@ -109,62 +151,78 @@ public class EmployeeService : BaseService<Employee>
     public async Task ImportEmployeesByExcel(string fullPath, string processId)
     {
         Notification notification = null;
+        ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+        int startRow = 2;
+
         try
         {
-            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
-
             using var package = new ExcelPackage(new FileInfo(fullPath));
-            var worksheet = package.Workbook.Worksheets[0];
+            var worksheet = package.Workbook.Worksheets.FirstOrDefault();
 
-            int startRow = 2;
             int totalRows = worksheet.Dimension.End.Row;
+
+            var importModel = new ImportNotificationModel(Path.GetFileName(fullPath));
+            if (totalRows == 0)
+            {
+                importModel.AddNota(0, "Nenhum registro encontrado!");
+                importModel.Title = "Erro ao importar funcionários";
+                _notificationsService.AddNotification(new Notification(importModel));
+                return;
+            }
 
             notification = new Notification($"A importação de Funcionários está sendo processada", Convert.ToDouble(totalRows), processId);
             _notificationsService.AddNotification(notification);
 
-            var importModel = new ImportNotificationModel(Path.GetFileName(fullPath));
-
             var positions = (await _positionRepository.GetAll()).ToList();
-            for (int row = startRow; row <= totalRows; row++)
-            {
-                if(string.IsNullOrWhiteSpace(worksheet.Cells[row, 1].Text) || string.IsNullOrWhiteSpace(worksheet.Cells[row, 2].Text))
-                    continue;
 
+            var employeeModel = new EmployeeImportModel();
+            for (int row = startRow; row <= totalRows; row++)
+            {           
                 importModel.ProcessedCount++;
                 _notificationsService.UpdateProgressNotification(notification, (row - 1));
 
-                string name = worksheet.Cells[row, Array.IndexOf(excelHeaders, "Nome*") + 1].Text;
-                if (string.IsNullOrEmpty(name))
-                    importModel.AddNota(row.ToString(), "Nome não informado.", NotaType.Error);
-                if(name.Length > 200)
-                    importModel.AddNota(row.ToString(), "Nome deve conter no máximo 200 caracteres.", NotaType.Error);
-
-                string rg = worksheet.Cells[row, Array.IndexOf(excelHeaders, "RG*") + 1].Text;
-                if (string.IsNullOrEmpty(rg))
-                    importModel.AddNota(row.ToString(), "RG não informado.", NotaType.Error);
-
-                string positionName = worksheet.Cells[row, Array.IndexOf(excelHeaders, "Cargo*") + 1].Text;
-                if (string.IsNullOrEmpty(positionName))
-                    importModel.AddNota(row.ToString(), "Cargo não informado.", NotaType.Error);
-
-                string admissionDate = worksheet.Cells[row, Array.IndexOf(excelHeaders, "Data de Admissão*") + 1].Text;
-                if (string.IsNullOrEmpty(admissionDate))
-                    importModel.AddNota(row.ToString(), "Data de Admissão não informado.", NotaType.Error);
-
-                var position = positions.FirstOrDefault(p => positionName.Equals(p.Name, StringComparison.OrdinalIgnoreCase));
-                var date = DateTime.TryParse(admissionDate, out var dateValue) ? dateValue : (DateTime?)null;
-
-                var getEmployeeByRg = await GetByRG(rg);
-                if (getEmployeeByRg != null)
-                    importModel.AddNota(row.ToString(), "Esse RG já pertence a um Funcionário.", NotaType.Error);
-                
-                if (importModel.ContainsErrorsByRow(row))
+                var cellRange = worksheet.Cells[row, 1, row, 6];
+                if (cellRange.All(c => c.Value == null || string.IsNullOrWhiteSpace(c.Value.ToString())))
                     continue;
 
-                var employee = new Employee(name, rg, date.Value, position);
-                await _repository.Insert(employee);
+                foreach (var header in HeaderFields)
+                {
+                    var value = worksheet.Cells.GetString(row, header.Col);
+                    header.SetValueIfValid(employeeModel, value, row, importModel);
+                }
+
+                var position = positions.FirstOrDefault(p => employeeModel.PositionName.Equals(p.Name, StringComparison.OrdinalIgnoreCase));
+                if (position == null)
+                    importModel.AddNota(row, "O Cargo informado não foi encontrado!");
+
+                if (importModel.ContainsErrorsByRow(row))
+                    continue;
+     
+                var employeeByRG = await GetByRG(employeeModel.RG);
+                if (employeeByRG != null)
+                {
+                    employeeByRG.UpdateEmployee(employeeModel, position);
+
+                    var updatedResult = await _repository.Update(employeeByRG.Id, employeeByRG);
+                    if(updatedResult <= 0)
+                    {
+                        importModel.AddNota(row, "Ocorreu um erro ao atualizar esse funcionário, entre em contato com o suporte!");
+                        continue;
+                    }
+
+                    importModel.UpdatedCount++;
+                    continue;
+                }      
+
+                var employee = new Employee(employeeModel.Name, employeeModel.RG, employeeModel.AdmissionDate, position);
+                var insertedResult = await _repository.Insert(employee);
+                if(insertedResult <= 0)
+                {
+                    importModel.AddNota(row, "Ocorreu um erro ao inserir esse funcionário, entre em contato com o suporte!");
+                    continue;
+                }
+
                 importModel.InsertedCount++;
-                importModel.UpdatedCount++;
             }
 
             _notificationsService.RemoveNotification(notification);

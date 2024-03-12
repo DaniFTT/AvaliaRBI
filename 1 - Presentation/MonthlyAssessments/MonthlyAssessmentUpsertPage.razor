@@ -341,12 +341,14 @@
             return;
         }
 
-        assessment = IsEditable ? await MonthlyAssessmentService.GetByIdUpdated(AssessmentId.Value) : await MonthlyAssessmentService.GetById(AssessmentId.Value);
-        if (assessment == null)
+        var assessmentResult = IsEditable ? await MonthlyAssessmentService.GetByIdUpdated(AssessmentId.Value) : await MonthlyAssessmentService.GetById(AssessmentId.Value);
+        if (!assessmentResult.IsSuccess)
         {
             await DialogService.ShowError("Houve um erro ao carregar sua Avaliação! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: new { IsEditable = IsEditable, AssessmentId = AssessmentId });
             await OnGoBack.InvokeAsync();
         }
+
+        assessment = assessmentResult.Value;
     }
 
 
@@ -539,7 +541,7 @@
         if (result.Canceled)
             return false; 
 
-        var assessmentsClosedByReference = await MonthlyAssessmentService.GetByReferenceDate(assessment.ReferenceDate.Value);
+        var assessmentsClosedByReference = (await MonthlyAssessmentService.GetByReferenceDate(assessment.ReferenceDate.Value)).ToArray();
         if(assessmentsClosedByReference.Any())
         {
             await DialogService.ShowError("Já existe uma Avaliação Concluida para essa Data de Competência \n\nReabra a outra avaliação para salvar essa!");
@@ -697,7 +699,7 @@
     private async Task SeeAssessmentEmployeeDetails(Employee employee)
     {
         var assessmentExist = await MonthlyAssessmentService.GetById(assessment.Id);
-        if(assessmentExist == null)
+        if(assessmentExist.Status == ResultStatus.NotFound)
         {
             await DialogService.ShowError("Salve a Avaliação para visualizar os detalhes");
             return;
