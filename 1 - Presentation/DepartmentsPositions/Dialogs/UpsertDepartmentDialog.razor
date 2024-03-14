@@ -98,15 +98,16 @@
 
     private async Task SaveDepartment()
     {
-        _processing = true;
-
         await form.Validate();
         if (!form.IsValid)
             return;
 
+        _processing = true;
         var currentpDepartment = await DepartmentService.GetByName(department.Name);
         if (currentpDepartment != null && currentpDepartment.Id != department.Id)
         {
+            _processing = true;
+
             await DialogService.ShowError("Já existe um registro cadastrado com este nome.");
             return;
         }
@@ -121,9 +122,8 @@
                 MudDialog.Close(DialogResult.Ok(newDepartment));
                 return;
             }
-
+            _processing = true;
             await DialogService.ShowError("Não foi possivel atualizar esse Departamento! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: newDepartment);
-
             return;
         }
 
@@ -139,7 +139,6 @@
         }
 
         _processing = false;
-
         await DialogService.ShowError("Não foi possivel criar esse Departamento! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: newDepartment);
     }
 

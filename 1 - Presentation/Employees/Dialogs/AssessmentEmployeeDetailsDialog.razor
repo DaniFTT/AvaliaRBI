@@ -21,20 +21,19 @@
                     @if (Assessment.IsClosed)
                 {
                     <MudChip Label="true" Color="Color.Success" Size="Size.Small" Variant="Variant.Outlined">Avaliação Concluida em @(Assessment.ClosedDate.HasValue ? Assessment.ClosedDate.Value.Date.ToString("dd/MM/yyyy") : string.Empty)</MudChip>
-
-                        <MudButton Disabled="@_processing" OnClick="async () =>
+                    <MudButton Disabled="@_processing" Color="Color.Primary" Size="Size.Small" Style="font-size: 0.5rem; min-width: 30px; margin-right: 0.5rem;" OnClick="async () =>
                     {
-                        var result = !_processing ? await GeneratePdf() : await VoidButton();
-                    }" Variant="Variant.Filled" Color="Color.Primary" Style="width: 180px" Size="MudBlazor.Size.Small">
+                         var result = !_processing ? await GeneratePdf() : await VoidButton();
+                    }" >
                             @if (_processing)
-                            {
-                                <MudProgressCircular Size="Size.Small" Indeterminate="true" title="Gerando PDF..." />
-                            }
-                            else
-                            {
-                                <MudText Style="font-size: 0.9rem">Gerar PDF</MudText>
-                            }
-                        </MudButton>
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" title="Gerando PDF...." />
+                    }
+                    else
+                    {
+                        <MudIcon Icon="fas fa-file-pdf" Title="Gerar PDF" Size="Size.Small" />                        
+                    }
+                </MudButton>
                 }
                 else
                 {

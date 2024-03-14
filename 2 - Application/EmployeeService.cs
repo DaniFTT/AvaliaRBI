@@ -2,6 +2,7 @@ using AvaliaRBI._2___Application.Shared;
 using AvaliaRBI._3___Domain;
 using AvaliaRBI._3___Domain.Abstractions;
 using AvaliaRBI._4___Repository;
+using AvaliaRBI.Shared.Extensions;
 using AvaliaRBI.Shared.Validation;
 using DocumentFormat.OpenXml.Drawing.Spreadsheet;
 using MudBlazor;
@@ -55,8 +56,8 @@ public class EmployeeService : BaseService<Employee>
 
         new ExcelField<EmployeeImportModel>(2, "RG*", "RG")
             .WithRequiredRule()
-            .WithMaxLengthRule(12)
-            .SetAction((employee, value) => employee.RG = value),
+            .WithRGRule()
+            .SetAction((employee, value) => employee.RG = value.NormalizeRG()),
 
         new ExcelField<EmployeeImportModel>(3, "Cargo*", "Cargo")
             .WithRequiredRule()
@@ -68,7 +69,7 @@ public class EmployeeService : BaseService<Employee>
 
         new ExcelField<EmployeeImportModel>(6, "Data de Admissão*", "Data de Admissão")
             .WithRequiredRule()
-            .WithMaxLengthRule(10)
+            .WithNoFutureDateRule()
             .SetAction((employee, value) => employee.AdmissionDate = DateTime.ParseExact(value, "dd/MM/yyyy", CultureInfo.GetCultureInfo("pt-BR"))),
     };
 
@@ -99,19 +100,6 @@ public class EmployeeService : BaseService<Employee>
                 if (name == "Departamento" || name == "Setor")
                     cell.AddComment("Este campo não é obrigatório para a inserção no sistema (Será preechido a partir do Cargo Selecionado).", "Sistema");
             }
-
-            //for (int i = 0; i < excelHeaders.Length; i++)
-            //{
-            //    var name = excelHeaders[i];
-            //    var cell = worksheet.Cells[currentRow, i + 1];
-            //    cell.Value = name;
-
-            //    if (name.Contains("*"))
-            //        cell.AddComment("Este campo é obrigatório para a inserção no sistema.", "Sistema");
-
-            //    if(name == "Departamento" || name == "Setor")
-            //        cell.AddComment("Este campo não é obrigatório para a inserção no sistema (Será preechido a partir do Cargo Selecionado).", "Sistema");
-            //}
 
             foreach (var employee in employees)
             {
@@ -145,6 +133,10 @@ public class EmployeeService : BaseService<Employee>
             var erroMessage = "Não foi possível exportar o Relatório de Funcionários! Contate o Suporte.";
             _notificationsService.AddNotification(erroMessage);
             await _emailService.SendErrorToSupport(ex, erroMessage);
+        }
+        finally
+        {
+            GC.Collect();
         }
     }
 
@@ -241,6 +233,10 @@ public class EmployeeService : BaseService<Employee>
             var erroMessage = "Não foi possível importar os Funcionários! Contate o Suporte.";
             _notificationsService.AddNotification(erroMessage);
             await _emailService.SendErrorToSupport(ex, erroMessage);
+        }
+        finally
+        {
+            GC.Collect();
         }
     }
 }

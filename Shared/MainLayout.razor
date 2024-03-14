@@ -23,9 +23,9 @@
 </style>
 
 <MudLayout>
-    <MudAppBar Elevation="1" Dense="true">
+    <MudAppBar Elevation="0" Dense="true">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        <MudText Typo="Typo.h5" Class="ml-3">Valorizando Talentos</MudText>
+        <MudText Typo="Typo.h6" Class="ml-3">Valorizando Talentos</MudText>
         <MudSpacer />
         <div class="d-flex">
 
@@ -102,10 +102,10 @@
                 </MudPaper>
             </MudPopover>
         </div>
-        <MudSwitch @bind-Checked="@ThemeConstants._isDarkMode" Color="Color.Primary" Class="ml-2" T="bool" title="Modo Claro/Escuro" />
-
+@*        <MudSwitch @bind-Checked="@ThemeConstants._isDarkMode" Color="Color.Primary" Class="ml-2" T="bool" title="Modo Claro/Escuro" />
+*@
     </MudAppBar>
-    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2" Style="padding-top: 0.5rem">
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="1" Style="padding-top: 0.5rem;     width: 240px;">
         <NavMenu />
     </MudDrawer>
     <MudMainContent>
@@ -241,7 +241,7 @@
             Primary = Colors.Orange.Darken3,
             Secondary = Colors.Blue.Darken4,
             AppbarBackground = Colors.Blue.Darken4,
-           
+            Background = Colors.Grey.Lighten4
         },
         PaletteDark = new PaletteDark()
         {

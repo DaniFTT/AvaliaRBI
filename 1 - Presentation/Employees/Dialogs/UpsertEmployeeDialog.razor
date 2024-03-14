@@ -148,15 +148,16 @@
 
     private async Task SaveEmployee()
     {
-        _processing = true;
-
         await form.Validate();
         if (!form.IsValid)
             return;
 
+        _processing = true;
+
         var newEmployee = new Employee(employee);
         if (!newEmployee.AdmissionDate.HasValue)
         {
+            _processing = true;
             await DialogService.ShowError("Selecione a Data de Admissão");
             return;
         }
@@ -173,6 +174,7 @@
                 return;
             }
 
+            _processing = true;
             await DialogService.ShowError("Não foi possivel atualizar esse Funcionário! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: newEmployee);
 
             return;
@@ -190,7 +192,6 @@
         }
 
         _processing = false;
-
         await DialogService.ShowError("Não foi possivel criar esse Funcionário! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: newEmployee);
     }
 

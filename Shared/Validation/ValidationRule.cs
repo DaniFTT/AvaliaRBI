@@ -1,4 +1,5 @@
-﻿using DocumentFormat.OpenXml;
+﻿using AvaliaRBI.Shared.Extensions;
+using DocumentFormat.OpenXml;
 using Microsoft.IdentityModel.Tokens;
 using OfficeOpenXml;
 using System;
@@ -38,6 +39,20 @@ public class ExcelField<T> where T : class
     public ExcelField<T> WithMaxLengthRule(int maxLength)
     {
         Rules.Add(new MaxLengthValidationRule(maxLength));
+        return this;
+    }
+
+    public ExcelField<T> WithRGRule()
+    {
+        Rules.Add(new RGValidationRule());
+
+        return this;
+    }
+
+    public ExcelField<T> WithNoFutureDateRule()
+    {
+        Rules.Add(new NotFutureDateValidationRule());
+
         return this;
     }
 
@@ -148,19 +163,45 @@ public class MaxLengthValidationRule : IValidationRule<string>
     }
 }
 
-public class DateValidationRule : IValidationRule<string>
+public class NotFutureDateValidationRule : IValidationRule<string>
 {
     public ValidationResult Validate(string value, string fieldName)
     {
-        var isValid = DateTime.TryParse(value, out _);
-        return new ValidationResult
+        var validationResult = new ValidationResult();
+
+        validationResult.IsValid = DateTime
+            .TryParseExact(value, "dd/MM/yyyy", CultureInfo.GetCultureInfo("pt-BR"), DateTimeStyles.AssumeLocal, out var date);
+
+        if(!validationResult.IsValid)
         {
-            IsValid = isValid,
-            ErrorMessage = isValid ? "" : $"O campo {fieldName} possui uma Data inválida"
-        };
+            validationResult.ErrorMessage = $" {fieldName} está inválida. A data deve ser no formato dd/mm/yyyy";
+            return validationResult;
+        }
+
+        validationResult.IsValid = date.Date <= DateTime.Now.Date;
+        validationResult.ErrorMessage = validationResult.IsValid ? "" : $"A {fieldName} não pode ser maior do que hoje";
+
+        return validationResult;
     }
 }
 
+public class RGValidationRule : IValidationRule<string>
+{
+    public RGValidationRule()
+    {
+    }
+
+    public ValidationResult Validate(string value, string fieldName = "RG")
+    {
+        var rg = value.NormalizeRG();
+
+        return new ValidationResult
+        {
+            IsValid = !string.IsNullOrEmpty(rg),
+            ErrorMessage = !string.IsNullOrEmpty(rg) ? "" : $"{fieldName} inválido. Deve ser informado apenas 9 dígitos, ou formatado com 12 caracteres: 00.000.000-0."
+        };
+    }
+}
 
 public static class ValidationExtensions
 {

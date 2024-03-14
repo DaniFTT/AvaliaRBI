@@ -88,15 +88,16 @@
 
     private async Task SaveSector()
     {
-        _processing = true;
-
         await form.Validate();
         if (!form.IsValid)
             return;
 
+        _processing = true;
+
         var currentSector = await SectorService.GetByName(sector.Name);
         if (currentSector != null && currentSector.Id != sector.Id)
         {
+            _processing = true;
             await DialogService.ShowError("Já existe um registro cadastrado com este nome.");
             return;
         }
@@ -112,8 +113,8 @@
                 return;
             }
 
+            _processing = true;
             await DialogService.ShowError("Não foi possivel atualizar esse Setor! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: newSector);
-
             return;
         }
 
@@ -127,7 +128,6 @@
         }
 
         _processing = true;
-
         await DialogService.ShowError("Não foi possivel criar esse Setor! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: newSector);
     }
 

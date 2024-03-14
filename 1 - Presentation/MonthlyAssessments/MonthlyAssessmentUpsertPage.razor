@@ -1,4 +1,5 @@
 ﻿@using Ardalis.Result;
+@using AvaliaRBI.Shared.Dialogs;
 @using AvaliaRBI.Shared.Functions;
 @using AvaliaRBI._1___Presentation.Employees.Dialogs;
 @using AvaliaRBI._2___Application;
@@ -20,58 +21,45 @@
     <MudGrid Style="padding: 0rem 1rem;">
         <MudItem xs="6" Style="text-align: right; align-self: center; display:inline-flex">
             <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Color="Color.Primary" aria-label="Voltar" Style="font-size: 2rem;" OnClick="GoBack" />
-            <MudText Typo="Typo.h6" Style="align-self: center;padding-left: 1rem; font-size: 1.2rem">@(IsReadonly ? "Detalhes" : (AssessmentId.HasValue ? "Edição" : "Criação")) da Avaliação</MudText>
+            <MudText Typo="Typo.h6" Style="align-self: center;padding-left: 1rem; font-size: 1.1rem">@(IsReadonly ? "Detalhes" : (AssessmentId.HasValue ? "Edição" : "Criação")) da Avaliação</MudText>
         </MudItem>
 
         <MudItem xs="6" Style="text-align: right; align-self: center;  padding-right: 2rem;">
             @if (IsEditable && !IsClosed)
-            { 
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Style="width: 160px; margin-right: 2rem" Size="Size.Small" OnClick="async () => await SaveScratch()">Salvar Rascunho</MudButton>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Style="width: 180px" Size="Size.Small"  OnClick="async () => await SaveConfirmation()">Concluir Avaliação</MudButton>
+            {                
+                <MudButton Class="buttonicon-extra-exmall" Variant="Variant.Filled" StartIcon="fas fa-floppy-disk" IconSize="Size.Small" Color="Color.Primary" Style="margin-right: 0.5rem; width: fit-content;" Size="Size.Small" OnClick="async () => await SaveConfirmation()" title="Concluir Avaliação">Concluir</MudButton>
+                <MudButton Class="buttonicon-extra-exmall" Variant="Variant.Outlined" StartIcon="fas fa-box-archive" IconSize="Size.Small" Color="Color.Primary" Style="width: fit-content; margin-right: 0.5rem" Size="Size.Small" OnClick="async () => await SaveScratch()" title="Salvar Rascunho">Salvar</MudButton>
+                <MudIconButton Icon="fas fa-upload" Color="Color.Default" Size="Size.Small" Style="margin-right: 0.5rem; font-size: 0.5rem" OnClick="() => OpenImportDialog()" Title="Importar Excel"></MudIconButton>
+                <MudIconButton Icon="fas fa-download" Color="Color.Default" Size="Size.Small" Style="font-size: 0.5rem" OnClick="() => ExportToExcel()" Title="Exportar Excel"></MudIconButton>
             }
             @if (!IsReadonly && IsClosed)
             {
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Style="width: 180px; margin-right: 2rem;" Size="Size.Small" OnClick="async () => await OpenAssessment()">Reabrir Avaliação</MudButton>
-                <MudChip Label="true" Color="Color.Success" Size="Size.Small" Variant="Variant.Outlined">Avaliação Concluida em @(assessment.ClosedDate.HasValue ? assessment.ClosedDate.Value.Date.ToString("dd/MM/yyyy") : string.Empty)</MudChip>
+                <MudButton StartIcon="fas fa-folder-open" Class="buttonicon-extra-exmall" Variant="Variant.Filled" Color="Color.Primary" Style="width: fit-content; margin-right: 0.5rem;" Size="Size.Small" OnClick="async () => await OpenAssessment()">Reabrir Avaliação</MudButton>
+                <MudChip Class="buttonicon-extra-exmall" Label="true" Color="Color.Success" Size="Size.Small" Variant="Variant.Outlined">Concluido em @(assessment.ClosedDate.HasValue ? assessment.ClosedDate.Value.Date.ToString("dd/MM/yyyy") : string.Empty)</MudChip>
             }
 
             @if (IsReadonly && IsClosed)
             {
-                
-                <MudButton Disabled="@_processingDownloadAll" OnClick="async () =>
+                <MudButton Disabled="_processingDownloadAll" Color="Color.Primary" Size="Size.Small" Style="font-size: 0.5rem; min-width: 30px; margin-right: 0.5rem;" OnClick="async () =>
                     {
                         var result = !_processingDownloadAll ? await DownloadAllAssessments() : await VoidButton();
-                    }" Variant="Variant.Filled" Color="Color.Primary" Style="width: 200px;  margin-right: 2rem;" Size="MudBlazor.Size.Small">
+                    }" >
                     @if (_processingDownloadAll)
                     {
                         <MudProgressCircular Size="Size.Small" Indeterminate="true" title="Baixando Avaliações..." />
                     }
                     else
                     {
-                        <MudText Style="font-size: 0.9rem">Baixar Avaliações</MudText>
+                        <MudIcon Icon="fas fa-file-zipper" Title="Baixar PDFs" Size="Size.Small" />                        
                     }
                 </MudButton>
+                <MudIconButton Icon="fas fa-download" Color="Color.Default" Size="Size.Small" Style="margin-right: 1rem; font-size: 0.5rem; border-radius: 10%" OnClick="() => ExportToExcel()" Title="Exportar Excel"></MudIconButton>
 
-@*                <MudButton Disabled="@_processingSendAssessments" OnClick="async () =>
-                    {
-                        var result = !_processingSendAssessments ? await SendAllAssessments() : await VoidButton();
-                    }" Variant="Variant.Filled" Color="Color.Primary" Style="width: 200px;  margin-right: 2rem;" Size="MudBlazor.Size.Small">
-                    @if (_processingSendAssessments)
-                    {
-                        <MudProgressCircular Size="Size.Small" Indeterminate="true" title="Enviando Avaliações..." />
-                    }
-                    else
-                    {
-                        <MudText Style="font-size: 0.9rem">Enviar Avaliações</MudText>
-                    }
-                </MudButton>*@
-
-
-                <MudChip Label="true" Color="Color.Success" Size="Size.Small" Variant="Variant.Outlined" >Avaliação Concluida em @(assessment.ClosedDate.HasValue ? assessment.ClosedDate.Value.Date.ToString("dd/MM/yyyy") : string.Empty)</MudChip>
+                <MudChip Label="true" Color="Color.Success" Size="Size.Small" Variant="Variant.Outlined" >Concluido em @(assessment.ClosedDate.HasValue ? assessment.ClosedDate.Value.Date.ToString("dd/MM/yyyy") : string.Empty)</MudChip>
             }
             @if (IsReadonly && !IsClosed)
             {
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Style="width: 180px; margin-right: 2rem" Size="Size.Small" OnClick="async () => await EditAssesment()">Editar Avaliação</MudButton>
+                <MudButton Class="buttonicon-extra-exmall" StartIcon="fas fa-pen-to-square" Variant="Variant.Filled" Color="Color.Primary" Style="width: fit-content; margin-right: 1rem" Size="Size.Small" OnClick="async () => await EditAssesment()">Editar</MudButton>
                 <MudChip Label="true" Color="Color.Default" Size="Size.Small" Variant="Variant.Outlined">Avaliação em andamento</MudChip>
             }
         </MudItem>
@@ -775,6 +763,85 @@
     async Task<bool> VoidButton()
     {
         return true;
+    }
+
+
+    private async Task ExportToExcel()
+    {
+        var processId = $"export-excel-{nameof(MonthlyAssessment)}";
+        if (NotificationsService.ProcessAlreadyRunning(processId))
+        {
+            Snackbar.Add($"Esse relatório já está em andamento, verifique suas notificações para acompanhar o progresso", MudBlazor.Severity.Error);
+            return;
+        }
+
+        await form.Validate();
+        if (!form.IsValid)
+        {
+            await DialogService.ShowError("Preencha os campos obrigatórios para exportar o relatório de Validação");
+            return;
+        }
+
+        //await EmployeeService.ExportEmployeesToExcel(processId);
+
+        Snackbar.Add($"Avaliação exportada com sucesso!", MudBlazor.Severity.Success);
+    }
+
+    private async Task OpenImportDialog()
+    {
+        var processId = $"import-excel-{nameof(MonthlyAssessment)}";
+        if (NotificationsService.ProcessAlreadyRunning(processId))
+        {
+            Snackbar.Add($"Essa importação já está em andamento, verifique suas notificações para acompanhar o progresso", MudBlazor.Severity.Warning);
+            return;
+        }
+
+        var importModel = new ImportFileModel()
+        {
+            ProcessId = processId,
+            Extension = "xlsx",
+            UploadCallBack = EventCallback.Factory.Create<ImportFileModel>(this, async (importModel) =>
+            {
+                await ImportByExcel(importModel);
+            })
+        };
+
+        var parameters = new DialogParameters();
+        parameters.Add("ImportModel", importModel);
+        parameters.Add("IsImport", true);
+
+        DialogOptions options = new DialogOptions()
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseButton = true
+        };
+
+        await DialogService.Show<ImportFileDialog>("Importar arquivo", parameters, options).Result;
+    }
+
+    public async Task ImportByExcel(ImportFileModel importModel)
+    {
+        //try
+        //{
+        //    var tempFilePath = Path.Combine(Path.GetTempPath(), importModel.File.Name);
+
+        //    await using (var fileStream = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write))
+        //    {
+        //        await importModel.File.OpenReadStream().CopyToAsync(fileStream);
+        //    }
+
+        //    await EmployeeService.ImportEmployeesByExcel(tempFilePath, importModel.ProcessId);
+        //    employees = (await EmployeeService.GetAll()).ToList();
+
+        //    File.Delete(tempFilePath);
+
+            Snackbar.Add($"Relatório de Avaliação importado com sucesso!", MudBlazor.Severity.Success);
+        //}
+        //catch (Exception ex)
+        //{
+        //    Snackbar.Add($"Falha ao importar arquivo: {ex.Message}", MudBlazor.Severity.Error);
+        //}
     }
 
     MonthlyAssessmentValidator monthlyAssessmentValidator = new();

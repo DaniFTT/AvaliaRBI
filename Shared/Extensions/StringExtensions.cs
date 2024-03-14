@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Twilio.Rest.Api.V2010.Account.Usage.Record;
+using static iText.IO.Codec.TiffWriter;
 
 namespace AvaliaRBI.Shared.Extensions;
 
@@ -30,6 +31,26 @@ public static class StringExtensions
         } while (File.Exists(fullPath));
 
         return fullPath;
+    }
+
+    public static string NormalizeRG(this string value)
+    {
+        var regexUnformatted = new Regex(@"^(\d{2})(\d{3})(\d{3})(\d{1})$");
+        var regexFormatted = new Regex(@"^\d{2}\.\d{3}\.\d{3}-\d{1}$");
+
+        if (regexFormatted.IsMatch(value))
+        {
+            return value;
+        }
+        else if (regexUnformatted.IsMatch(value))
+        {
+            return regexUnformatted.Replace(value, @"$1.$2.$3-$4");
+        }
+        else
+        {
+            return string.Empty;
+        }
+
     }
 }
 

@@ -98,14 +98,16 @@
 
     private async Task SavePosition()
     {
-        _processing = true;
         await form.Validate();
         if (!form.IsValid)
             return;
 
+        _processing = true;
+
         var currentpPosition = await PositionService.GetByName(position.Name);
         if (currentpPosition != null && currentpPosition.Id != position.Id)
         {
+            _processing = true;
             await DialogService.ShowError("Já existe um registro cadastrado com este nome.");
             return;
         }
@@ -123,8 +125,8 @@
                 return;
             }
 
+            _processing = true;
             await DialogService.ShowError("Não foi possivel atualizar esse Cargo! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: newPosition);
-
             return;
         }
 
