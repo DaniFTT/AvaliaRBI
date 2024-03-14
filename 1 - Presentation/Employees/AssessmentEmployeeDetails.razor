@@ -25,35 +25,35 @@
 
 <MudGrid Style="min-width: 80rem; padding-bottom:2rem" >
 
-    <MudItem xs="3">
-        <MudCard Style="height: 5rem;" Elevation="4">
+    <MudItem xs="4" Style="padding-right: 0">
+        <MudCard Style="height: 5rem;" Elevation="2">
             <MudCardContent Style="padding: 12px;">
                 <MudText Typo="Typo.body2" Style="font-size: 0.8rem;">Funcionário</MudText>
-                <MudText Style="padding-top: 0.6rem;font-size: 1.1rem;">@employee.Name</MudText>
+                <MudText Style="padding-top: 0.9rem;font-size: 0.9rem;">@employee.Name</MudText>
             </MudCardContent>
         </MudCard>
     </MudItem>
-    <MudItem xs="3">
-        <MudCard Style="height: 5rem;" Elevation="4">
+    <MudItem xs="2">
+        <MudCard Style="height: 5rem;" Elevation="2">
+            <MudCardContent Style="padding: 12px;">
+                <MudText Typo="Typo.body2" Style="font-size: 0.8rem;">RG</MudText>
+                <MudText Style="padding-top: 0.9rem;font-size: 0.9rem;">@employee.RG</MudText>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="3" Style="padding-right: 0">
+        <MudCard Style="height: 5rem;" Elevation="2">
             <MudCardContent Style="padding: 12px;">
                 <MudText Typo="Typo.body2" Style="font-size: 0.8rem;">Cargo</MudText>
-                <MudText Style="padding-top: 0.6rem;font-size: 1.1rem;">@employee.Position.Name</MudText>
+                <MudText Style="padding-top: 0.9rem;font-size: 0.9rem;">@employee.Position.Name</MudText>
             </MudCardContent>
         </MudCard>
     </MudItem>
     <MudItem xs="3">
-        <MudCard Style="height: 5rem;" Elevation="4">
+        <MudCard Style="height: 5rem;" Elevation="2">
             <MudCardContent Style="padding: 12px;">
-                <MudText Typo="Typo.body2" Style="font-size: 0.8rem;">Departamento</MudText>
-                <MudText Style="padding-top: 0.6rem;font-size: 1.1rem;">@employee.Position.Department.Name</MudText>
-            </MudCardContent>
-        </MudCard>
-    </MudItem>
-    <MudItem xs="3">
-        <MudCard Style="height: 5rem;" Elevation="4">
-            <MudCardContent Style="padding: 12px;">
-                <MudText Typo="Typo.body2" Style="font-size: 0.8rem;">Competência</MudText>
-                <MudText Style="padding-top: 0.6rem;font-size: 1.1rem;">@(assessment.ReferenceDate.HasValue ? GetFormatedDate(assessment.ReferenceDate.Value) : string.Empty)</MudText>
+                <MudText Typo="Typo.body2" Style="font-size: 0.8rem;">Departamento/Setor</MudText>
+                <MudText Style="padding-top: 0.9rem;font-size: 0.9rem;">@(employee.Position.Department.Name)/@(employee.Position.Department.Sector.Name)</MudText>
             </MudCardContent>
         </MudCard>
     </MudItem>
@@ -61,7 +61,7 @@
         <div class="d-flex">
             <MudGrid Style="height: 75vh;">
                     <MudItem xs="6">
-                    <MudCard Elevation="4" Style="height: 100%">
+                    <MudCard Elevation="2" Style="height: 100%">
                         <MudCardContent>
                                 <MudText Typo="Typo.h6">Resumo do Desempenho</MudText>
                                 <MudTable Style="margin-top: 0.5rem" 
@@ -97,62 +97,73 @@
                 </MudItem>
                     <MudItem xs="6" Style="padding-bottom: 0;" >
                         <MudGrid Style="height: 100%;">
-                            <MudItem xs="12" Style="padding-bottom: 0;  height: 60%">
-                            <MudCard Elevation="4" Style="height: 100%;">
-                                <MudCardContent>
-                                    <MudText Typo="Typo.h6" Style="margin-bottom:1.5rem">Histórico de Desempenho</MudText>
-
-                                    <MudGrid Style="height: 360px;">
-                                        <MudItem xs="12" Style="padding-bottom: 1.5rem;  height: 100%">
-                                                <ApexChart TItem="HistoricGrade"
-                                                           Title=""
-                                                           Options=options
-                                                @ref=chart
-                                                           Width="@("100%")"
-                                                           Height="@("100%")" >
-
-                                                    <ApexPointSeries TItem="HistoricGrade"
-                                                                     Items="HistoricData"
-                                                                     Name="Notas"
-                                                                     SeriesType="SeriesType.Bar"
-                                                                     XValue="e => e.ReferenceDate"
-                                                                     YValue="e=> (decimal)e.Note"
-                                                                     ShowDataLabels />
-
-                                                </ApexChart>
-                                        </MudItem>
-                                    </MudGrid>
-                                </MudCardContent>
-                            </MudCard>
-                        </MudItem>
-                        <MudItem xs="12" Style="padding-bottom: 0; height: 40%">
-                            <MudCard Elevation="4" Style="height: 100%;">
+                        <MudItem xs="12" Style="padding-bottom: 0; height: 30%">
+                            <MudCard Elevation="2" Style="height: 100%;">
                                     <MudText Style="padding-top: 1rem;padding-left: 1rem;" Typo="Typo.h6">Resultado</MudText>
                                     <MudCardContent Style="height: calc(100% - 3rem); display: flex; align-items: center;">
                                         <div class="d-flex flex-grow-1 gap-10" style="text-align: center;">
-                                            <MudPaper Class="flex-auto d-flex py-8" Width="50%" Style="justify-content: center; border-radius: 35px;" Elevation="5">
+                                            <MudElement Class="flex-auto d-flex py-10" Style="justify-content: center; border-radius: 35px;">
 
                                                 <MudGrid>
                                                     <MudItem xs="12">
-                                                        <MudText Typo="Typo.h6">Nota Final</MudText>
+                                                        <MudText Typo="Typo.h6" Style="font-weight: 400;">Competência</MudText>
                                                     </MudItem>
-                                                    <MudItem xs="12">
-                                                    <MudText Typo="Typo.h3">@assessmentEmployee.Note.ToString("F2")</MudText>
+                                                    <MudItem xs="12" Style="padding-top: 0;">
+                                                        <MudText Typo="Typo.h5" Style="font-size: 1.4rem;">@(assessment.ReferenceDate.HasValue ? GetFormatedDate(assessment.ReferenceDate.Value) : string.Empty)</MudText>
                                                     </MudItem>
                                                 </MudGrid>
-                                            </MudPaper>
-                                            <MudPaper Class="flex-auto d-flex py-8" Width="50%" Style="justify-content: center; border-radius: 35px;" Elevation="5">
+                                            </MudElement>
+                                            <MudElement Class="flex-auto d-flex py-10" Style="justify-content: center; border-radius: 35px;" >
+
+                                                <MudGrid>
+                                                    <MudItem xs="12">
+                                                        <MudText Typo="Typo.h6" Style="font-weight: 400;">Nota Final</MudText>
+                                                    </MudItem>
+                                                    <MudItem xs="12" Style="padding-top: 0;">
+                                                        <MudText Typo="Typo.h5" Style="font-size: 1.4rem;">@assessmentEmployee.Note.ToString("F2")</MudText>
+                                                    </MudItem>
+                                                </MudGrid>
+                                            </MudElement>
+                                            <MudElement Class="flex-auto d-flex py-10" Style="justify-content: center; border-radius: 35px;">
                                                     
                                                 <MudGrid>
                                                     <MudItem xs="12">
-                                                        <MudText Typo="Typo.h6">Desempenho Total</MudText>
+                                                        <MudText Typo="Typo.h6" Style="font-weight: 400;">Desempenho Total</MudText>
                                                     </MudItem>
-                                                    <MudItem xs="12">
-                                                    <MudText Typo="Typo.h3">@(totalPerfomance.ToString("F2"))%</MudText>
+                                                    <MudItem xs="12" Style="padding-top: 0;">
+                                                        <MudText Typo="Typo.h5" Style="font-size: 1.4rem;">@(totalPerfomance.ToString("F2"))%</MudText>
                                                     </MudItem>
                                                 </MudGrid>
-                                            </MudPaper>
+                                            </MudElement>
                                         </div>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                        <MudItem xs="12" Style="padding-bottom: 0;  height: 70%">
+                            <MudCard Elevation="2" Style="height: 100%;">
+                                <MudCardContent>
+                                    <MudText Typo="Typo.h6" Style="margin-bottom:1.5rem">Histórico de Desempenho</MudText>
+
+                                    <MudGrid Style="height: 400px;">
+                                        <MudItem xs="12" Style="padding-bottom: 1.5rem;  height: 100%">
+                                            <ApexChart TItem="HistoricGrade"
+                                                       Title=""
+                                                       Options=options
+                                            @ref=chart
+                                                       Width="@("100%")"
+                                                       Height="@("100%")">
+
+                                                <ApexPointSeries TItem="HistoricGrade"
+                                                                 Items="HistoricData"
+                                                                 Name="Notas"
+                                                                 SeriesType="SeriesType.Bar"
+                                                                 XValue="e => e.ReferenceDate"
+                                                                 YValue="e=> (decimal)e.Note"
+                                                                          ShowDataLabels />
+
+                                            </ApexChart>
+                                        </MudItem>
+                                    </MudGrid>
                                 </MudCardContent>
                             </MudCard>
                         </MudItem>

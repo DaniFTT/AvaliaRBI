@@ -66,22 +66,22 @@
 
             @if (!isReadonly)
             {
-                <MudButton OnClick="Cancel">Cancelar</MudButton>
-                <MudButton Disabled="@_processing" Color="Color.Success" OnClick="SaveEmployee">
+                <MudButton Size="Size.Small" OnClick="Cancel">Cancelar</MudButton>
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Disabled="@_processing" Color="Color.Success" OnClick="SaveEmployee">
                     @if (_processing)
                     {
                         <MudProgressCircular Size="Size.Small" Indeterminate="true" />
                     }
                     else
                     {
-                        <MudText>Salvar</MudText>
+                        <MudText Style="font-size: 0.8rem;">Salvar</MudText>
                     }
                 </MudButton>
             }
 
             @if (isReadonly)
             {
-                <MudButton OnClick="Cancel">Fechar</MudButton>
+                <MudButton OnClick="Cancel" Size="Size.Small">Fechar</MudButton>
             }
         </MudElement>
        

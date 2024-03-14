@@ -219,6 +219,23 @@ a, .btn-link {
     }
 
 
+    .mud-navmenu.mud-navmenu-default .mud-nav-link.active:not(.mud-nav-link-disabled) .mud-icon-root {
+        color: var(--mud-palette-primary);
+        background-color: #f9f9f9;
+        font-size: 0.8rem;
+        align-self: center;
+        text-align: center;
+        margin-right: 0.5rem;
+    }
+
+    .mud-navmenu.mud-navmenu-default .mud-nav-link:not(.active) .mud-icon-root {
+        font-size: 0.7rem;
+        align-self: center;
+        margin-right: 0.5rem;
+        text-align: center;
+    }
+
+
 @media (max-width: 600px) {
     .ellipsis, label.mud-input-label.mud-input-label-animated.mud-input-label-text.mud-input-label-margin-dense.mud-input-label-inputcontrol {
         /* Estilos para telas menores que 600px */

@@ -33,8 +33,22 @@
                 <MudIconButton Icon="fas fa-download" Color="Color.Default" Size="Size.Small" Style="font-size: 0.5rem" OnClick="() => ExportToExcel()" Title="Exportar Excel"></MudIconButton>
             }
             @if (!IsReadonly && IsClosed)
-            {
+            {   
                 <MudButton StartIcon="fas fa-folder-open" Class="buttonicon-extra-exmall" Variant="Variant.Filled" Color="Color.Primary" Style="width: fit-content; margin-right: 0.5rem;" Size="Size.Small" OnClick="async () => await OpenAssessment()">Reabrir Avaliação</MudButton>
+                <MudButton Disabled="_processingDownloadAll" Color="Color.Primary" Size="Size.Small" Style="font-size: 0.5rem; min-width: 30px; margin-right: 0.5rem;" OnClick="async () =>
+                    {
+                        var result = !_processingDownloadAll ? await DownloadAllAssessments() : await VoidButton();
+                    }" >
+                    @if (_processingDownloadAll)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" title="Baixando Avaliações..." />
+                    }
+                    else
+                    {
+                        <MudIcon Icon="fas fa-file-zipper" Title="Baixar PDFs" Size="Size.Small" />                        
+                    }
+                </MudButton>
+                <MudIconButton Icon="fas fa-download" Color="Color.Default" Size="Size.Small" Style="margin-right: 0.5rem; font-size: 0.5rem; min-width: 30px; border-radius: 15%" OnClick="() => ExportToExcel()" Title="Exportar Excel"></MudIconButton>
                 <MudChip Class="buttonicon-extra-exmall" Label="true" Color="Color.Success" Size="Size.Small" Variant="Variant.Outlined">Concluido em @(assessment.ClosedDate.HasValue ? assessment.ClosedDate.Value.Date.ToString("dd/MM/yyyy") : string.Empty)</MudChip>
             }
 
@@ -53,13 +67,14 @@
                         <MudIcon Icon="fas fa-file-zipper" Title="Baixar PDFs" Size="Size.Small" />                        
                     }
                 </MudButton>
-                <MudIconButton Icon="fas fa-download" Color="Color.Default" Size="Size.Small" Style="margin-right: 1rem; font-size: 0.5rem; border-radius: 10%" OnClick="() => ExportToExcel()" Title="Exportar Excel"></MudIconButton>
-
+                <MudIconButton Icon="fas fa-download" Color="Color.Default" Size="Size.Small" Style="margin-right: 0.5rem; font-size: 0.5rem; min-width: 30px; border-radius: 15%" OnClick="() => ExportToExcel()" Title="Exportar Excel"></MudIconButton>
+                <MudIconButton Icon="fas fa-pen-to-square" Style="margin-right: 1rem; font-size: 0.5rem; min-width: 30px; border-radius: 15%" Title="Editar Avaliação" Size="Size.Small" OnClick="() => EditAssesment()"></MudIconButton>
+               
                 <MudChip Label="true" Color="Color.Success" Size="Size.Small" Variant="Variant.Outlined" >Concluido em @(assessment.ClosedDate.HasValue ? assessment.ClosedDate.Value.Date.ToString("dd/MM/yyyy") : string.Empty)</MudChip>
             }
             @if (IsReadonly && !IsClosed)
             {
-                <MudButton Class="buttonicon-extra-exmall" StartIcon="fas fa-pen-to-square" Variant="Variant.Filled" Color="Color.Primary" Style="width: fit-content; margin-right: 1rem" Size="Size.Small" OnClick="async () => await EditAssesment()">Editar</MudButton>
+                <MudIconButton Color="Color.Primary" Icon="fas fa-pen-to-square" Style="margin-right: 0.5rem; font-size: 0.5rem; min-width: 30px; border-radius: 15%" Title="Editar Avaliação" Size="Size.Small" OnClick="() => EditAssesment()"></MudIconButton>
                 <MudChip Label="true" Color="Color.Default" Size="Size.Small" Variant="Variant.Outlined">Avaliação em andamento</MudChip>
             }
         </MudItem>
@@ -78,7 +93,7 @@
                 @if (showDepartments)
                 {
                     <div class="d-flex" style="margin-top: 2rem; align-items: center">
-                        <MudText Typo="Typo.body1" Style="font-weight: 500; font-size: 1.1rem; width: 75%;">
+                        <MudText Typo="Typo.body1" Style="font-weight: 400; font-size: 1.1rem; width: 75%; color: #524848;">
                             Departamentos
                         </MudText>
 
@@ -644,7 +659,7 @@
         assessment.ClosedDate = null;
 
         var updateResult = await MonthlyAssessmentService.Update(assessment.Id, assessment);
-        if(updateResult.IsSuccess)
+        if(!updateResult.IsSuccess)
         {
             await DialogService.ShowError("Não foi possivel reabrir essa Avaliação! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: assessment);
             return;

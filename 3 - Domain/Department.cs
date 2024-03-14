@@ -23,7 +23,10 @@ public class Department : BaseEntity
     [OneToMany(CascadeOperations = CascadeOperation.All)]
     public List<PositionJob> Positions { get; set; }
 
-    public Department() { }
+    public Department() 
+    {
+        Sector = new Sector();
+    }
 
     public Department(string name, string description)
     {

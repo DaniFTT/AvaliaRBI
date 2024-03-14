@@ -16,24 +16,24 @@
                 </MudText>
             </MudItem>
 
-            <MudItem xs="7" Style="text-align: end; padding-right: 5rem;">
+            <MudItem xs="7" Style="text-align: end; padding-right: 3rem;">
                 <div class="d-flex gap-3" style="justify-content: end;">
                     @if (Assessment.IsClosed)
                 {
-                    <MudChip Label="true" Color="Color.Success" Size="Size.Small" Variant="Variant.Outlined">Avaliação Concluida em @(Assessment.ClosedDate.HasValue ? Assessment.ClosedDate.Value.Date.ToString("dd/MM/yyyy") : string.Empty)</MudChip>
-                    <MudButton Disabled="@_processing" Color="Color.Primary" Size="Size.Small" Style="font-size: 0.5rem; min-width: 30px; margin-right: 0.5rem;" OnClick="async () =>
+                        <MudButton Disabled="@_processing" Color="Color.Primary" Size="Size.Small" Style="font-size: 0.5rem; min-width: 30px; margin-right: 0.5rem;" OnClick="async () =>
                     {
                          var result = !_processing ? await GeneratePdf() : await VoidButton();
-                    }" >
+                    }">
                             @if (_processing)
-                    {
-                        <MudProgressCircular Size="Size.Small" Indeterminate="true" title="Gerando PDF...." />
-                    }
-                    else
-                    {
-                        <MudIcon Icon="fas fa-file-pdf" Title="Gerar PDF" Size="Size.Small" />                        
-                    }
-                </MudButton>
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" title="Gerando PDF...." />
+                            }
+                            else
+                            {
+                                <MudIcon Icon="fas fa-file-pdf" Title="Gerar PDF" Size="Size.Small" />
+                            }
+                        </MudButton>
+                    <MudChip Label="true" Color="Color.Success" Size="Size.Small" Variant="Variant.Outlined">Avaliação Concluida em @(Assessment.ClosedDate.HasValue ? Assessment.ClosedDate.Value.Date.ToString("dd/MM/yyyy") : string.Empty)</MudChip>
                 }
                 else
                 {

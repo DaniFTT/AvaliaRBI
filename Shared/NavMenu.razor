@@ -1,12 +1,12 @@
 ﻿<MudNavMenu Bordered> 
-    <MudNavLink Href="/" Match="NavLinkMatch.All">Dashboard</MudNavLink>
-    <MudNavGroup Title="Avaliações" Expanded="true">
-        <MudNavLink Href="/monthly-assessments" Match="NavLinkMatch.Prefix">Avaliações Mensais</MudNavLink>
+    <MudNavLink Icon="fas fa-chart-line" Href="/" Match="NavLinkMatch.All">Dashboard</MudNavLink>
+    <MudNavGroup Icon="fas fa-folder-tree" Title="Avaliações" Expanded="true">
+        <MudNavLink Icon="fas fa-file-lines" Href="/monthly-assessments" Match="NavLinkMatch.Prefix">Avaliações Mensais</MudNavLink>
 @*        <MudNavLink Href="/avaliacaotrimestral" Match="NavLinkMatch.Prefix">Avaliação Trimestral</MudNavLink>
 *@    </MudNavGroup>
-    <MudNavGroup Title="Cadastros" Expanded="true">
-        <MudNavLink Href="/employee" Match="NavLinkMatch.Prefix">Funcionários</MudNavLink>
-        <MudNavLink Href="/organizational-structure" Match="NavLinkMatch.Prefix">Estrutura Organizacional</MudNavLink>
-        <MudNavLink Href="/assessments-parameters" Match="NavLinkMatch.Prefix">Critérios de Avaliação</MudNavLink>
+    <MudNavGroup Icon="fas fa-table" Title="Cadastros" Expanded="true">
+        <MudNavLink Icon="fas fa-users"  Href="/employee" Match="NavLinkMatch.Prefix">Funcionários</MudNavLink>
+        <MudNavLink Icon="fas fa-sitemap" Href="/organizational-structure" Match="NavLinkMatch.Prefix">Estrutura Organizacional</MudNavLink>
+        <MudNavLink Icon="fas fa-clipboard"  Href="/assessments-parameters" Match="NavLinkMatch.Prefix">Critérios de Avaliação</MudNavLink>
     </MudNavGroup>
 </MudNavMenu>

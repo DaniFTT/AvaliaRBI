@@ -249,13 +249,22 @@
 
             @if (!isReadonly)
             {
-                <MudButton OnClick="Cancel">Cancelar</MudButton>
-                <MudButton Color="Color.Success" OnClick="SaveCollection">Salvar</MudButton>
+                <MudButton Size="Size.Small" OnClick="Cancel">Cancelar</MudButton>
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Disabled="@_processing" Color="Color.Success" OnClick="SaveCollection">
+                    @if (_processing)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    }
+                    else
+                    {
+                        <MudText Style="font-size: 0.8rem;">Salvar</MudText>
+                    }
+                </MudButton>
             }
 
             @if (isReadonly)
             {
-                <MudButton OnClick="Cancel">Fechar</MudButton>
+                <MudButton Size="Size.Small" OnClick="Cancel">Fechar</MudButton>
             }
         </MudElement>
 
@@ -291,6 +300,8 @@
 
     private Department value { get; set; } = new Department();
     private IEnumerable<Department> departmentsSelected { get; set; } = new HashSet<Department>();
+
+    private bool _processing = false;
 
     private IEnumerable<string> ValidateLimitValue(int? limit)
     {
@@ -481,15 +492,18 @@
         if (!form.IsValid)
             return;
 
+        _processing = true;
         var currentCollection = await AssessmentCollectionService.GetByName(collection.Name);
         if (currentCollection != null && currentCollection.Id != collection.Id)
         {
+            _processing = false;
             await DialogService.ShowError("Já existe um registro cadastrado com este nome.");
             return;
         }
 
         if(!departmentsSelected.Any())
         {
+            _processing = false;
             await DialogService.ShowError($"Selecione pelo menos 1 departamento");
             return;
         }
@@ -500,6 +514,7 @@
 
         if(!newCollection.AssessmentAspects.Any())
         {
+            _processing = false;
             await DialogService.ShowError($"Necessário criar pelo menos 1 Aspecto");
             return;
         }
@@ -507,6 +522,7 @@
         var invalidAspects = newCollection.AssessmentAspects.Where(a => !a.Criteria.Any()).ToArray();
         if (invalidAspects.Any())
         {
+            _processing = false;
             await DialogService.ShowError($"Os seguintes Aspcetos estão sem Critérios definidos: \n\n{string.Join(",\n", invalidAspects.Select(a => a.Name))}");
             return;
         }
@@ -514,6 +530,7 @@
         var invalidCriterias = newCollection.AssessmentAspects.Where(a => a.Criteria.Any(c => string.IsNullOrEmpty(c.Name) || c.Name == helperTextCriteria || !c.IsValidLimitValue())).ToArray();
         if (invalidCriterias.Any())
         {
+            _processing = false;
             await DialogService.ShowError($"Os seguintes Aspcetos estão com valores de Critérios indefinidos: \n\n{string.Join(",\n", invalidCriterias.Select(a => a.Name))}");
             return;
         }
@@ -530,6 +547,7 @@
                 return;
             }
 
+            _processing = false;
             await DialogService.ShowError("Não foi possivel atualizar esses Critérios! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: newCollection);
             return;
         }
@@ -543,6 +561,7 @@
             return;
         }
 
+        _processing = false;
         await DialogService.ShowError("Não foi possivel criar esses Critérios! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: newCollection);
     }
 
