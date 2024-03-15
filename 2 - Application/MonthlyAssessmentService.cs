@@ -297,62 +297,40 @@ public class MonthlyAssessmentService : BaseService<MonthlyAssessment>
         }
     }
 
-    public class ExportAssessmentModel
-    {
-        public string AspectId { get; set; }
-        public string CriteriaId { get; set; }
-        public int Col { get; set; }
-
-        public ExportAssessmentModel(string aspectId, string criteriaId, int col)
-        {
-            AspectId = aspectId;
-            CriteriaId = criteriaId;
-            Col = col;
-        }
-    }
-
     private static void AddWorksheetModel(ExcelWorksheet worksheet, MonthlyAssessment assessment)
     {
-        // A1:L1 com o título, estilo de título 1, mesclado e centralizado
         worksheet.Cells["A1:L1"].Merge = true;
         worksheet.Cells["A1:L1"].Value = "Modelo de Avaliação Mensal - RBI Papéis";
         worksheet.Cells["A1:L1"].StyleName = "CustomTitle1";
 
-        // A2 com 'Responsável:'
         worksheet.Cells["A2"].Value = "Responsável:";
         worksheet.Cells["A2"].Style.Font.Size = 11;
         worksheet.Cells["A2"].Style.Font.Bold = true;
         worksheet.Cells["A2"].Style.Font.Color.SetColor(darkBlue);
 
-        // B2:L2 com o nome do responsável, mesclado e centralizado
         worksheet.Cells["B2:L2"].Merge = true;
         worksheet.Cells["B2:L2"].Value = assessment.Responsible;
         worksheet.Cells["B2:L2"].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Left;
         worksheet.Cells["B2:L2"].Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Top;
 
-        // A3 com 'Competência:'
         worksheet.Cells["A3"].Value = "Competência:";
         worksheet.Cells["A3"].Style.Font.Size = 11;
         worksheet.Cells["A3"].Style.Font.Bold = true;
         worksheet.Cells["A3"].Style.Font.Color.SetColor(darkBlue);
 
-        // B3:L3 com a descrição, mesclado e centralizado
         worksheet.Cells["B3:L3"].Merge = true;
         worksheet.Cells["B3:L3"].Value = assessment.ReferenceDate.Value.GetFormatedDate();
         worksheet.Cells["B3:L3"].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Left;
         worksheet.Cells["B3:L3"].Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Top;
 
-
-        // A3 com 'Competência:'
         worksheet.Cells["A4"].Value = "Descrição:";
         worksheet.Cells["A4"].Style.Font.Size = 11;
         worksheet.Cells["A4"].Style.Font.Bold = true;
         worksheet.Cells["A4"].Style.Font.Color.SetColor(darkBlue);
 
-        // B3:L3 com a descrição, mesclado e centralizado
         worksheet.Cells["B4:L4"].Merge = true;
         worksheet.Cells["B4:L4"].Value = string.IsNullOrEmpty(assessment.Description) ? (assessment.IsClosed ? assessment.GetConfirmationMessage() : assessment.GetScratchMessage()) : assessment.Description;
-        worksheet.Cells["B4:L4"].Style.WrapText = true; // Habilita a quebra de linha
+        worksheet.Cells["B4:L4"].Style.WrapText = true; 
         worksheet.Cells["B4:L4"].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Left;
         worksheet.Cells["B4:L4"].Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Top;
 
@@ -365,26 +343,24 @@ public class MonthlyAssessmentService : BaseService<MonthlyAssessment>
 
             worksheet.Cells["B5:L5"].Merge = true;
             worksheet.Cells["B5:L5"].Value = assessment.ClosedDate.Value.ToShortDateString();
-            worksheet.Cells["B5:L5"].Style.WrapText = true; // Habilita a quebra de linha
+            worksheet.Cells["B5:L5"].Style.WrapText = true;
             worksheet.Cells["B5:L5"].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Left;
             worksheet.Cells["B5:L5"].Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Top;
         }
 
         if (!assessment.IsClosed)
         {
-            // A6 com 'Observações:'
-            worksheet.Cells["A5"].Value = "Observações:";
-            worksheet.Cells["A5"].Style.Font.Size = 11;
-            worksheet.Cells["A5"].Style.Font.Bold = true;
-            worksheet.Cells["A5"].Style.Font.Color.SetColor(darkBlue);
+            worksheet.Cells["A6"].Value = "Observações:";
+            worksheet.Cells["A6"].Style.Font.Size = 11;
+            worksheet.Cells["A6"].Style.Font.Bold = true;
+            worksheet.Cells["A6"].Style.Font.Color.SetColor(darkBlue);
 
-            // B6:L6 com o texto das observações, mesclado e alinhado à esquerda
-            worksheet.Cells["B5:L11"].Merge = true;
-            worksheet.Cells["B5:L11"].Value = "Esse é um arquivo de Modelo para importação de Avaliação Mensal. \nPara sua correta leitura, não modifique os campos exportados e já preenchidos, modifique apenas\nas células que pertencem às avaliações de critérios. \n\nCampos não preenchidos terão o valor padrão";
-            worksheet.Cells["B5:L11"].Style.WrapText = true; // Habilita a quebra de linha
-            worksheet.Cells["B5:L11"].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Left;
-            worksheet.Cells["B5:L11"].Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Top;
-            worksheet.Cells["B5:L11"].AutoFitColumns();
+            worksheet.Cells["B6:L10"].Merge = true;
+            worksheet.Cells["B6:L10"].Value = "Esse é um arquivo de Modelo para importação de Avaliação Mensal. \nPara sua correta leitura, não modifique os campos exportados e já preenchidos, modifique apenas\nas células que pertencem às avaliações de critérios. \n\nCampos não preenchidos terão o valor padrão";
+            worksheet.Cells["B6:L10"].Style.WrapText = true;
+            worksheet.Cells["B6:L10"].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Left;
+            worksheet.Cells["B6:L10"].Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Top;
+            worksheet.Cells["B6:L10"].AutoFitColumns();
         }
 
         worksheet.Column(1).AutoFit();
@@ -428,5 +404,19 @@ public class MonthlyAssessmentService : BaseService<MonthlyAssessment>
 
         textStyle.Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Left;
         textStyle.Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Top;
+    }
+
+    public class ExportAssessmentModel
+    {
+        public string AspectId { get; set; }
+        public string CriteriaId { get; set; }
+        public int Col { get; set; }
+
+        public ExportAssessmentModel(string aspectId, string criteriaId, int col)
+        {
+            AspectId = aspectId;
+            CriteriaId = criteriaId;
+            Col = col;
+        }
     }
 }
