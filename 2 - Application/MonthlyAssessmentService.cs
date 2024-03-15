@@ -8,6 +8,7 @@ using AvaliaRBI.Shared.Extensions;
 using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Wordprocessing;
 using OfficeOpenXml;
+using static AvaliaRBI._2___Application.Shared.Notification;
 
 namespace AvaliaRBI._2___Application;
 
@@ -43,6 +44,69 @@ public class MonthlyAssessmentService : BaseService<MonthlyAssessment>
         }
     }
 
+    public async Task<bool> ImportAssessmentByExcel(string fullPath, string processId, MonthlyAssessment assessment, List<AssessmentModel> assessmentModel)
+    {
+        Notification notification = null;
+        ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+
+        try
+        {
+            using var package = new ExcelPackage(new System.IO.FileInfo(fullPath));
+            var firstWorksheet = package.Workbook.Worksheets.FirstOrDefault();
+
+            var importModel = new ImportNotificationModel(Path.GetFileName(fullPath));
+            if (firstWorksheet.Name != "Informações Gerais" )
+            {
+                importModel.AddNota(firstWorksheet.Name, 0, "Arquivo Inválido, exporte o Modelo de Avaliação, preencha apenas seus valores e importe novamente!");
+                importModel.Title = "Erro ao importar modelo de avaliação";
+                _notificationsService.AddNotification(new Notification(importModel));
+                return false;
+            }
+            var firstCell = firstWorksheet.Cells["A1:A1"].Value;
+            if (firstCell != null && firstCell.ToString() != "Modelo de Avaliação Mensal - RBI Papéis")
+            {
+                importModel.AddNota(firstWorksheet.Name, 1, "Importe um arquivo de modelo de avaliação válido!");
+                importModel.Title = "Erro ao importar modelo de avaliação";
+                _notificationsService.AddNotification(new Notification(importModel));
+                return false;
+            }
+
+            notification = new Notification($"A importação do modelo de avaliação está sendo processada", Convert.ToDouble(assessmentModel.Count), processId);
+            _notificationsService.AddNotification(notification);
+
+            
+
+
+
+
+
+            _notificationsService.RemoveNotification(notification);
+
+            importModel.Title = importModel.ContainsErrors ? "Não foi possível importar todo o modelo de avaliação. Verifique os detalhes da importação!" :
+                "Importação de modelo de avaliação Realizada com Sucesso! Veja os detalhes";
+
+            var notificationImport = new Notification(importModel);
+            _notificationsService.AddNotification(notificationImport);
+        }
+        catch (Exception ex)
+        {
+            if (notification != null)
+                _notificationsService.RemoveNotification(notification);
+
+            var erroMessage = "Não foi possível importar o modelo! Contate o Suporte.";
+            _notificationsService.AddNotification(erroMessage, Notification.NotificationType.Error);
+            await _emailService.SendErrorToSupport(ex, erroMessage);
+
+            return false;
+        }
+        finally
+        {
+            GC.Collect();
+        }
+
+        return true;
+    }
+
     public async Task<bool> ExportMonthlyAssessmentToExcel(string processId, MonthlyAssessment assessment, List<AssessmentModel> assessmentModels)
     {
         Notification notification = null;
@@ -50,30 +114,30 @@ public class MonthlyAssessmentService : BaseService<MonthlyAssessment>
 
         try
         {
-            notification = new Notification($"O Relatório de Avaliação Mensal está sendo gerado", Convert.ToDouble(assessmentModels.Count), processId);
+            notification = new Notification($"O {(assessment.IsClosed ? "Relatório" : "Modelo")} de Avaliação Mensal está sendo gerado", Convert.ToDouble(assessmentModels.Count), processId);
             _notificationsService.AddNotification(notification);
 
             using var package = new ExcelPackage();
-            var worksheetModel = package.Workbook.Worksheets.Add("Modelo");
+            var worksheetModel = package.Workbook.Worksheets.Add("Informações Gerais");
 
             CreateStyles(worksheetModel);
             AddWorksheetModel(worksheetModel, assessment);
 
             AddWorksheetsDepartments(package, assessment, assessmentModels);
 
-            var fileName = $"modelo-avaliacao-mensal-{assessment.ReferenceDate.Value.GetFormatedDate().Replace("/", "-")}";
+            var fileName = $"{(assessment.IsClosed ? "relatorio" : "modelo")}-avaliacao-mensal-{assessment.ReferenceDate.Value.GetFormatedDate().Replace("/", "-")}";
             var fileBytes = package.GetAsByteArray();
 
             await _excelService.SalvarExcel(fileName, fileBytes);
 
             _notificationsService.RemoveNotification(notification);
-            _notificationsService.AddNotification($"O Relatório de Avaliação Mensal foi gerado com sucesso!");
+            _notificationsService.AddNotification($"O {(assessment.IsClosed ? "Relatório" : "Modelo")} de Avaliação Mensal foi gerado com sucesso!");
         }
         catch (Exception ex)
         {
             _notificationsService.RemoveNotification(notification);
 
-            var erroMessage = "Não foi possível exportar o Relatório de Avaliação Mensal! Contate o Suporte.";
+            var erroMessage = $"Não foi possível exportar o {(assessment.IsClosed ? "Relatório" : "Modelo")} de Avaliação Mensal! Contate o Suporte.";
             _notificationsService.AddNotification(erroMessage, Notification.NotificationType.Error);
             await _emailService.SendErrorToSupport(ex, erroMessage);
             return false;
@@ -300,7 +364,7 @@ public class MonthlyAssessmentService : BaseService<MonthlyAssessment>
     private static void AddWorksheetModel(ExcelWorksheet worksheet, MonthlyAssessment assessment)
     {
         worksheet.Cells["A1:L1"].Merge = true;
-        worksheet.Cells["A1:L1"].Value = "Modelo de Avaliação Mensal - RBI Papéis";
+        worksheet.Cells["A1:L1"].Value = $"{(assessment.IsClosed ? "Relatório" : "Modelo")} de Avaliação Mensal - RBI Papéis";
         worksheet.Cells["A1:L1"].StyleName = "CustomTitle1";
 
         worksheet.Cells["A2"].Value = "Responsável:";

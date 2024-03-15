@@ -31,8 +31,30 @@
                 <MudItem xs="6" Style="text-align: right;">
                     <MudButton Class="person-button" Variant="Variant.Filled" StartIcon="fas fa-plus" IconSize="Size.Small" Color="Color.Primary" Size="Size.Small" Style="width:fit-content; margin-right: 1rem; font-size: 0.7rem" OnClick="() => CreateEmployee()">Adicionar</MudButton>
 
-                    <MudIconButton Icon="fas fa-upload" Color="Color.Default" Size="Size.Small" Style="margin-right: 0.5rem; font-size: 0.5rem" OnClick="() => OpenImportDialog()" Title="Importar Excel"></MudIconButton>
-                    <MudIconButton Icon="fas fa-download" Color="Color.Default" Size="Size.Small" Style="margin-right: 0.5rem; font-size: 0.5rem" OnClick="() => ExportToExcel()" Title="Exportar Excel"></MudIconButton>
+                    <MudButton Disabled="_processingImportExcel" Color="Color.Default" Size="Size.Small" Style="font-size: 0.5rem; min-width: 30px; margin-right: 0.5rem;" OnClick="() => OpenImportDialog()">
+                        @if (_processingImportExcel)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" title="Importando..." />
+                        }
+                        else
+                        {
+                            <MudIcon Icon="fas fa-upload" Title="Importar Funcionários" Color="Color.Default" Size="Size.Small" />
+                        }
+                    </MudButton>
+
+                    <MudButton Disabled="_processingExportExcel" Color="Color.Default" Size="Size.Small" Style="font-size: 0.5rem; min-width: 30px; margin-right: 0.5rem;" OnClick="async () =>
+                    {
+                        var result = !_processingExportExcel ? await ExportToExcel() : await VoidButton();
+                    }">
+                        @if (_processingExportExcel)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" title="Exportando..." />
+                        }
+                        else
+                        {
+                            <MudIcon Icon="fas fa-download" Title="Exportar Funcionários" Color="Color.Default" Size="Size.Small" />
+                        }
+                    </MudButton>
                 </MudItem>
             </MudGrid>
         </MudCard>
@@ -200,23 +222,29 @@
         employees!.RemoveAll(employee => employee.Id == employeeId);
     }
 
-    private async Task ExportToExcel()
+    private bool _processingExportExcel { get; set; }
+
+    private async Task<bool> ExportToExcel()
     {
         var processId = $"export-excel-{nameof(Employee)}";
         if (NotificationsService.ProcessAlreadyRunning(processId))
         {
             Snackbar.Add($"Esse relatório já está em andamento, verifique suas notificações para acompanhar o progresso", MudBlazor.Severity.Error);
-            return;
+            return false;
         }
 
+        _processingExportExcel = true;
         var result = await EmployeeService.ExportEmployeesToExcel(processId);
         if (result)
         {
+            _processingExportExcel = false;
             Snackbar.Add($"Funcionários exportados com sucesso!", MudBlazor.Severity.Success);
-            return;
+            return true;
         }
 
+        _processingExportExcel = false;
         Snackbar.Add($"Não foi possível exportar o Relatório de Funcionários!", MudBlazor.Severity.Error);
+        return false;
     }
 
     private async Task OpenImportDialog()
@@ -252,23 +280,20 @@
         await DialogService.Show<ImportFileDialog>("Importar arquivo", parameters, options).Result;
     }
 
+    private bool _processingImportExcel { get; set; }
     public async Task ImportByExcel(ImportFileModel importModel)
     {
+        _processingImportExcel = true;
+        var tempFilePath = Path.Combine(Path.GetTempPath(), importModel.File.Name);
         try
         {
-            var tempFilePath = Path.Combine(Path.GetTempPath(), importModel.File.Name);
-
             await using (var fileStream = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write))
             {
                 await importModel.File.OpenReadStream().CopyToAsync(fileStream);
             }
 
             var result = await EmployeeService.ImportEmployeesByExcel(tempFilePath, importModel.ProcessId);
-
             employees = (await EmployeeService.GetAll()).ToList();
-
-            File.Delete(tempFilePath);
-
             if (result)
             {
                 Snackbar.Add($"Funcionários importados com sucesso!", MudBlazor.Severity.Success);
@@ -276,11 +301,20 @@
             }
 
             Snackbar.Add($"Não foi possível importar os Funcionários!", MudBlazor.Severity.Error);
-
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Falha ao importar arquivo: {ex.Message}", MudBlazor.Severity.Error);
         }
+        finally
+        {
+            File.Delete(tempFilePath);
+            _processingImportExcel = false;
+        }
+    }
+
+    async Task<bool> VoidButton()
+    {
+        return true;
     }
 }

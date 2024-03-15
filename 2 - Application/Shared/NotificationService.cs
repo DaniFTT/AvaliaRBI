@@ -210,11 +210,11 @@ public class Notification
         switch (Type)
         {
             case NotificationType.Success:
-                return Icons.Material.Filled.Bookmark;
+                return "fas fa-circle-check";
             case NotificationType.Error:
-                return Icons.Material.Filled.Error;
+                return "fas fa-circle-xmark";
             case NotificationType.Warning:
-                return Icons.Material.Filled.Warning;
+                return "fas fa-circle-exclamation";
             case NotificationType.Processing:
                 return Icons.Material.Filled.Downloading;
         }
@@ -259,6 +259,11 @@ public class Notification
             Notas.Add(new NotaModel(linha, message, type));
         }
 
+        public void AddNota(string worksheet, int linha, string message, NotaType type = NotaType.Error)
+        {
+            Notas.Add(new NotaModel(worksheet, linha, message, type));
+        }
+
         public ImportNotificationModel()
         {
             
@@ -275,12 +280,21 @@ public class Notification
     }
     public class NotaModel
     {
+        public string Worksheet { get; set; }
         public string Row { get; set; }
         public string Message { get; set; }
         public NotaType Type { get; set; }
 
         public NotaModel(int linha, string message, NotaType type)
         {
+            Row = linha.ToString();
+            Message = message;
+            Type = type;
+        }
+
+        public NotaModel(string worksheet, int linha, string message, NotaType type)
+        {
+            Worksheet = worksheet;
             Row = linha.ToString();
             Message = message;
             Type = type;

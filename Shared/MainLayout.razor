@@ -19,6 +19,7 @@
 
     .notification-list .mud-list-item-icon {
         min-width: 35px;
+        padding-left: 2px;
     }
 </style>
 
@@ -52,7 +53,7 @@
                                     <div class="d-flex" style="align-items: center;">
                                         @if (notification.ImportModel != null)
                                         {
-                                            <MudIconButton Style="margin-right:8px" Color="@notification.GetColor()" Icon="@Icons.Material.Filled.FileOpen" Size="Size.Small" aria-label="Detalhes" OnClick="async() => await SeeImportDetails(notification)"></MudIconButton>
+                                            <MudIconButton Style="margin-right:8px; padding-left: 0px;" Color="@notification.GetColor()" Icon="@Icons.Material.Filled.FileOpen" Size="Size.Small" aria-label="Detalhes" OnClick="async() => await SeeImportDetails(notification)"></MudIconButton>
 
                                         }
                                         <div class="d-flex flex-column" style="width: 100%; max-width: 560px;">

@@ -184,12 +184,12 @@ public class EmployeeService : BaseService<Employee>
                 foreach (var header in HeaderFields)
                 {
                     var value = worksheet.Cells.GetString(row, header.Col);
-                    header.SetValueIfValid(employeeModel, value, row, importModel);
+                    header.SetValueIfValid(employeeModel, value, worksheet.Name, row, importModel);
                 }
 
                 var position = positions.FirstOrDefault(p => employeeModel.PositionName.Equals(p.Name, StringComparison.OrdinalIgnoreCase));
                 if (position == null)
-                    importModel.AddNota(row, "O Cargo informado não foi encontrado!");
+                    importModel.AddNota(worksheet.Name,row, "O Cargo informado não foi encontrado!");
 
                 if (importModel.ContainsErrorsByRow(row))
                     continue;
@@ -202,7 +202,7 @@ public class EmployeeService : BaseService<Employee>
                     var updatedResult = await _repository.Update(employeeByRG.Id, employeeByRG);
                     if(updatedResult <= 0)
                     {
-                        importModel.AddNota(row, "Ocorreu um erro ao atualizar esse funcionário, entre em contato com o suporte!");
+                        importModel.AddNota(worksheet.Name, row, "Ocorreu um erro ao atualizar esse funcionário, entre em contato com o suporte!");
                         continue;
                     }
 
@@ -214,7 +214,7 @@ public class EmployeeService : BaseService<Employee>
                 var insertedResult = await _repository.Insert(employee);
                 if(insertedResult <= 0)
                 {
-                    importModel.AddNota(row, "Ocorreu um erro ao inserir esse funcionário, entre em contato com o suporte!");
+                    importModel.AddNota(worksheet.Name, row, "Ocorreu um erro ao inserir esse funcionário, entre em contato com o suporte!");
                     continue;
                 }
 

@@ -203,8 +203,12 @@ a, .btn-link {
 }
 
 
-@media (min-width: 960px)  {
-.mud-drawer-open-responsive-md-left .mud-main-content {
+.notification-list svg.mud-icon-root.mud-svg-icon.mud-icon-size-small {
+    font-size: 22px;
+}
+
+@media (min-width: 960px) {
+    .mud-drawer-open-responsive-md-left .mud-main-content {
     margin-left: calc(var(--mud-drawer-width-left) - 15px);
 }
 

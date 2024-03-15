@@ -70,20 +70,22 @@
             {
                 <MudTable Elevation="3" Items="@ImportNotificationModel.Notas" FixedHeader="true" Height="280px" Dense="true" Hover="true" Striped="true">
                     <ColGroup>
+                        <col style="width: 15%;" />
                         <col style="width: 5%;" />
-                        <col style="width: 85%;" />
+                        <col style="width: 70%;" />
                         <col style="width: 10%;" />
-                        <col />
                     </ColGroup>
                     <HeaderContent>
+                        <MudTh>Aba</MudTh>
                         <MudTh>Linha</MudTh>
                         <MudTh>Mensagem</MudTh>
-                        <MudTh>Tipo</MudTh>
+                        <MudTh>Tipo</MudTh>            
                     </HeaderContent>
                     <RowTemplate>
-                        <MudTd DataLabel="Linha">@context.Row.ToString()</MudTd>
-                        <MudTd DataLabel="Mensagem">@context.Message</MudTd>
-                        <MudTd DataLabel="Tipo">@context.Type.GetDescription()</MudTd>
+                        <MudTd DataLabel="Linha" Style="font-size: 0.8rem;">@context.Worksheet.ToString()</MudTd>
+                        <MudTd DataLabel="Linha" Style="font-size: 0.8rem;">@context.Row.ToString()</MudTd>
+                        <MudTd DataLabel="Mensagem" Style="font-size: 0.8rem;">@context.Message</MudTd>
+                        <MudTd DataLabel="Tipo" Style="font-size: 0.8rem;">@context.Type.GetDescription()</MudTd>
                     </RowTemplate>
 
                     <PagerContent>

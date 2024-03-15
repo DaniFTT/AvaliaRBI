@@ -66,7 +66,7 @@ public class ExcelField<T> where T : class
         return this;
     }
 
-    public void SetValueIfValid(T targetObject, string value, int row, ImportNotificationModel importModel)
+    public void SetValueIfValid(T targetObject, string value, string worksheet, int row, ImportNotificationModel importModel)
     {
         if (_setValueAction == null || !Rules.Any())
             return;
@@ -78,7 +78,7 @@ public class ExcelField<T> where T : class
             return;
         }
 
-        importModel.AddNota(row, validationResult.ErrorMessage);  
+        importModel.AddNota(worksheet, row, validationResult.ErrorMessage);  
     }
 }
 

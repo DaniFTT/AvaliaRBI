@@ -30,11 +30,23 @@
                 <MudButton Class="buttonicon-extra-exmall" Variant="Variant.Filled" StartIcon="fas fa-floppy-disk" IconSize="Size.Small" Color="Color.Primary" Style="margin-right: 0.5rem; width: fit-content;" Size="Size.Small" OnClick="async () => await SaveConfirmation()" title="Concluir Avaliação">Concluir</MudButton>
                 <MudButton Class="buttonicon-extra-exmall" Variant="Variant.Outlined" StartIcon="fas fa-box-archive" IconSize="Size.Small" Color="Color.Primary" Style="width: fit-content; margin-right: 0.5rem" Size="Size.Small" OnClick="async () => await SaveScratch()" title="Salvar Rascunho">Salvar</MudButton>
                 <MudIconButton Icon="fas fa-upload" Color="Color.Default" Size="Size.Small" Style="margin-right: 0.5rem; font-size: 0.5rem" OnClick="() => OpenImportDialog()" Title="Importar Excel"></MudIconButton>
-                <MudIconButton Icon="fas fa-download" Color="Color.Default" Size="Size.Small" Style="font-size: 0.5rem" OnClick="() => ExportToExcel()" Title="Exportar Excel"></MudIconButton>
+                <MudButton Disabled="_processingExportExcel" Color="Color.Default" Size="Size.Small" Style="font-size: 0.5rem; min-width: 30px; margin-right: 0.5rem;" OnClick="async () =>
+                    {
+                        var result = !_processingExportExcel ? await ExportToExcel() : await VoidButton();
+                    }" >
+                    @if (_processingExportExcel)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" title="Exportando..." />
+                    }
+                    else
+                    {
+                        <MudIcon Icon="fas fa-download" Title="@($"Exportar {(assessment.IsClosed ? "Relatório" : "Modelo de Avaliação")}" )" Color="Color.Default" Size="Size.Small" />
+                    }
+                </MudButton>
             }
             @if (!IsReadonly && IsClosed)
             {   
-                <MudButton StartIcon="fas fa-folder-open" Class="buttonicon-extra-exmall" Variant="Variant.Filled" Color="Color.Primary" Style="width: fit-content; margin-right: 0.5rem;" Size="Size.Small" OnClick="async () => await OpenAssessment()">Reabrir Avaliação</MudButton>
+                <MudButton StartIcon="fas fa-folder-open" Class="buttonicon-extra-exmall" Variant="Variant.Filled" Color="Color.Primary" Style="width: fit-content; margin-right: 1rem;" Size="Size.Small" OnClick="async () => await OpenAssessment()">Reabrir Avaliação</MudButton>
                 <MudButton Disabled="_processingDownloadAll" Color="Color.Primary" Size="Size.Small" Style="font-size: 0.5rem; min-width: 30px; margin-right: 0.5rem;" OnClick="async () =>
                     {
                         var result = !_processingDownloadAll ? await DownloadAllAssessments() : await VoidButton();
@@ -48,8 +60,23 @@
                         <MudIcon Icon="fas fa-file-zipper" Title="Baixar PDFs" Size="Size.Small" />                        
                     }
                 </MudButton>
-                <MudIconButton Icon="fas fa-download" Color="Color.Default" Size="Size.Small" Style="margin-right: 0.5rem; font-size: 0.5rem; min-width: 30px; border-radius: 15%" OnClick="() => ExportToExcel()" Title="Exportar Excel"></MudIconButton>
-                <MudChip Class="buttonicon-extra-exmall" Label="true" Color="Color.Success" Size="Size.Small" Variant="Variant.Outlined">Concluido em @(assessment.ClosedDate.HasValue ? assessment.ClosedDate.Value.Date.ToString("dd/MM/yyyy") : string.Empty)</MudChip>
+
+                <MudButton Disabled="_processingExportExcel" Color="Color.Default" Size="Size.Small" Style="font-size: 0.5rem; min-width: 30px; margin-right: 1rem;" OnClick="async () =>
+                    {
+                        var result = !_processingExportExcel ? await ExportToExcel() : await VoidButton();
+                    }" >
+                    @if (_processingExportExcel)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" title="Exportando..." />
+                    }
+                    else
+                    {
+                        <MudIcon Icon="fas fa-download" Title="@($"Exportar {(assessment.IsClosed ? "Relatório" : "Modelo de Avaliação")}" )" Color="Color.Default" Size="Size.Small" />
+                    }
+                </MudButton>
+
+
+                <MudChip Label="true" Color="Color.Success" Size="Size.Small" Variant="Variant.Outlined">Concluido em @(assessment.ClosedDate.HasValue ? assessment.ClosedDate.Value.Date.ToString("dd/MM/yyyy") : string.Empty)</MudChip>
             }
 
             @if (IsReadonly && IsClosed)
@@ -67,14 +94,28 @@
                         <MudIcon Icon="fas fa-file-zipper" Title="Baixar PDFs" Size="Size.Small" />                        
                     }
                 </MudButton>
-                <MudIconButton Icon="fas fa-download" Color="Color.Default" Size="Size.Small" Style="margin-right: 0.5rem; font-size: 0.5rem; min-width: 30px; border-radius: 15%" OnClick="() => ExportToExcel()" Title="Exportar Excel"></MudIconButton>
+
+                <MudButton Disabled="_processingExportExcel" Color="Color.Default" Size="Size.Small" Style="font-size: 0.5rem; min-width: 30px; margin-right: 0.5rem;" OnClick="async () =>
+                    {
+                        var result = !_processingExportExcel ? await ExportToExcel() : await VoidButton();
+                    }" >
+                    @if (_processingExportExcel)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" title="Exportando..." />
+                    }
+                    else
+                    {
+                        <MudIcon Icon="fas fa-download" Title="@($"Exportar {(assessment.IsClosed ? "Relatório" : "Modelo de Avaliação")}" )" Color="Color.Default" Size="Size.Small" />
+                    }
+                </MudButton>
+
                 <MudIconButton Icon="fas fa-pen-to-square" Style="margin-right: 1rem; font-size: 0.5rem; min-width: 30px; border-radius: 15%" Title="Editar Avaliação" Size="Size.Small" OnClick="() => EditAssesment()"></MudIconButton>
                
                 <MudChip Label="true" Color="Color.Success" Size="Size.Small" Variant="Variant.Outlined" >Concluido em @(assessment.ClosedDate.HasValue ? assessment.ClosedDate.Value.Date.ToString("dd/MM/yyyy") : string.Empty)</MudChip>
             }
             @if (IsReadonly && !IsClosed)
             {
-                <MudIconButton Color="Color.Primary" Icon="fas fa-pen-to-square" Style="margin-right: 0.5rem; font-size: 0.5rem; min-width: 30px; border-radius: 15%" Title="Editar Avaliação" Size="Size.Small" OnClick="() => EditAssesment()"></MudIconButton>
+                <MudIconButton Color="Color.Primary" Icon="fas fa-pen-to-square" Style="margin-right: 0.5rem; font-size: 1rem; min-width: 30px; border-radius: 15%" Title="Editar Avaliação" Size="Size.Small" OnClick="() => EditAssesment()"></MudIconButton>
                 <MudChip Label="true" Color="Color.Default" Size="Size.Small" Variant="Variant.Outlined">Avaliação em andamento</MudChip>
             }
         </MudItem>
@@ -185,26 +226,36 @@
                                                                     align-self: center;
                                                                     padding-bottom: 1rem;
                                                                 ">
-                                                                    <MudIconButton Size="@Size.Small" Title="Resultado" Icon="@Icons.Material.Filled.FileOpen" OnClick="() => SeeAssessmentEmployeeDetails(employment)" />
+                                                                    <MudIconButton Color="Color.Primary" Size="@Size.Small" Title="Resultado" Icon="@Icons.Material.Filled.FileOpen" OnClick="() => SeeAssessmentEmployeeDetails(employment)" />
                                                                 </div>
                                                                 
 
-                                                                <div style="width: 15%;">
+                                                                <div style="width: 12%;">
                                                                         <MudText title="Funcionário" Typo="Typo.body2" Style="font-size: 0.8rem; padding-top: 0.1rem;" Class="ellipsis">
                                                                         Funcionário
                                                                     </MudText>
-                                                                        <MudText title="@employment.Name" Typo="Typo.body1" Style="font-size: 0.95rem;  padding-top: 0.15rem;" Class="ellipsis">
+                                                                        <MudText title="@employment.Name" Typo="Typo.body1" Style="font-size: 0.8rem; font-weight: 500;padding-top: 0.4rem;" Class="ellipsis">
                                                                         @employment.Name
                                                                     </MudText>
                                                                     <div style="height: 1px; border-bottom: 1.5px solid #737379; padding-top: 0.1rem;">
                                                                     </div>
                                                                 </div>
-
                                                                 <div style="width: 8%;">
+                                                                        <MudText title="RG" Typo="Typo.body2" Style="font-size: 0.8rem; padding-top: 0.1rem;" Class="ellipsis">
+                                                                        RG
+                                                                    </MudText>
+                                                                        <MudText title="@employment.RG" Typo="Typo.body1" Style="font-size: 0.8rem; font-weight: 500;padding-top: 0.4rem;" Class="ellipsis">
+                                                                        @employment.RG
+                                                                    </MudText>
+                                                                    <div style="height: 1px; border-bottom: 1.5px solid #737379; padding-top: 0.1rem;">
+                                                                    </div>
+                                                                </div>
+
+                                                                <div style="width: 7%;">
                                                                         <MudText title="Admissão" Typo="Typo.body2" Style="font-size: 0.8rem; padding-top: 0.1rem" Class="ellipsis">
                                                                         Admissão
                                                                     </MudText>
-                                                                        <MudText title="@(employment.AdmissionDate.Value.ToString("dd/MM/yyyy"))" Typo="Typo.body1" Style="font-size: 0.95rem; padding-top: 0.15rem;" Class="ellipsis">
+                                                                        <MudText title="@(employment.AdmissionDate.Value.ToString("dd/MM/yyyy"))" Typo="Typo.body1" Style="font-size: 0.8rem; font-weight: 500;padding-top: 0.4rem;" Class="ellipsis">
                                                                         @(employment.AdmissionDate.Value.ToString("dd/MM/yyyy"))
                                                                     </MudText>
                                                                         <div style="height: 1px; border-bottom: 1.5px solid #737379; padding-top: 0.1rem;">
@@ -780,31 +831,35 @@
         return true;
     }
 
-
-    private async Task ExportToExcel()
+    private bool _processingExportExcel { get; set; }
+    private async Task<bool> ExportToExcel()
     {
         var processId = $"export-excel-{nameof(MonthlyAssessment)}";
         if (NotificationsService.ProcessAlreadyRunning(processId))
         {
-            Snackbar.Add($"Esse relatório já está em andamento, verifique suas notificações para acompanhar o progresso", MudBlazor.Severity.Error);
-            return;
+            Snackbar.Add($"Esse {(assessment.IsClosed ? "Relatório" : "Modelo")} já está sendo processado, verifique suas notificações para acompanhar o progresso", MudBlazor.Severity.Error);
+            return false;
         }
 
         await form.Validate();
         if (!form.IsValid)
         {
-            await DialogService.ShowError("Preencha os campos obrigatórios para exportar o relatório de Validação");
-            return;
+            await DialogService.ShowError($"Preencha os campos obrigatórios para exportar o {(assessment.IsClosed ? "Relatório" : "Modelo")} de Avaliação");
+            return false;
         }
 
+        _processingExportExcel = true;
         var result = await MonthlyAssessmentService.ExportMonthlyAssessmentToExcel(processId, assessment, assessmentModels);
         if(result)
         {
-            Snackbar.Add($"Avaliação exportada com sucesso!", MudBlazor.Severity.Success);
-            return;
+            _processingExportExcel = false;
+            Snackbar.Add($"{(assessment.IsClosed ? "Relatório" : "Modelo")} de Avaliação exportado com sucesso!", MudBlazor.Severity.Success);
+            return true;
         }
 
-        Snackbar.Add("Não foi possível exportar o Relatório de Avaliação Mensal!", MudBlazor.Severity.Error);
+        _processingExportExcel = false;
+        Snackbar.Add($"Não foi possível exportar o {(assessment.IsClosed ? "Relatório" : "Modelo")} de Avaliação Mensal!", MudBlazor.Severity.Error);
+        return false;
     }
 
     private async Task OpenImportDialog()
@@ -840,28 +895,38 @@
         await DialogService.Show<ImportFileDialog>("Importar arquivo", parameters, options).Result;
     }
 
+    private bool _processingImportExcel { get; set; }
+
     public async Task ImportByExcel(ImportFileModel importModel)
     {
-        //try
-        //{
-        //    var tempFilePath = Path.Combine(Path.GetTempPath(), importModel.File.Name);
+        _processingImportExcel = true;
+        var tempFilePath = Path.Combine(Path.GetTempPath(), importModel.File.Name);
 
-        //    await using (var fileStream = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write))
-        //    {
-        //        await importModel.File.OpenReadStream().CopyToAsync(fileStream);
-        //    }
+        try
+        {
+            await using (var fileStream = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write))
+            {
+                await importModel.File.OpenReadStream().CopyToAsync(fileStream);
+            }
 
-        //    await EmployeeService.ImportEmployeesByExcel(tempFilePath, importModel.ProcessId);
-        //    employees = (await EmployeeService.GetAll()).ToList();
+            var result = await MonthlyAssessmentService.ImportAssessmentByExcel(tempFilePath, importModel.ProcessId, assessment, assessmentModels);     
+            if (result)
+            {
+                Snackbar.Add($"Modelo de Avaliação importado com sucesso!", MudBlazor.Severity.Success);
+                return;
+            }
 
-        //    File.Delete(tempFilePath);
-
-            Snackbar.Add($"Relatório de Avaliação importado com sucesso!", MudBlazor.Severity.Success);
-        //}
-        //catch (Exception ex)
-        //{
-        //    Snackbar.Add($"Falha ao importar arquivo: {ex.Message}", MudBlazor.Severity.Error);
-        //}
+            Snackbar.Add($"Não foi possível importar o Modelo de Avaliação!", MudBlazor.Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Falha ao importar o Modelo de Avaliação: {ex.Message}", MudBlazor.Severity.Error);
+        }
+        finally
+        {
+            File.Delete(tempFilePath);
+            _processingImportExcel = false;
+        }
     }
 
     MonthlyAssessmentValidator monthlyAssessmentValidator = new();
