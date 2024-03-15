@@ -622,7 +622,7 @@
             return false; 
         }
 
-        Snackbar.Add("Avaliação salva com sucesso!", severity: MudBlazor.Severity.Success);
+        Snackbar.Add("Avaliação concluída com sucesso!", severity: MudBlazor.Severity.Success);
 
         IsClosed = true;
         IsReadonly = false;
@@ -797,9 +797,14 @@
             return;
         }
 
-        //await EmployeeService.ExportEmployeesToExcel(processId);
+        var result = await MonthlyAssessmentService.ExportMonthlyAssessmentToExcel(processId, assessment, assessmentModels);
+        if(result)
+        {
+            Snackbar.Add($"Avaliação exportada com sucesso!", MudBlazor.Severity.Success);
+            return;
+        }
 
-        Snackbar.Add($"Avaliação exportada com sucesso!", MudBlazor.Severity.Success);
+        Snackbar.Add("Não foi possível exportar o Relatório de Avaliação Mensal!", MudBlazor.Severity.Error);
     }
 
     private async Task OpenImportDialog()

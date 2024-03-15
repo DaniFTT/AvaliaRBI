@@ -1,4 +1,5 @@
 ﻿using AvaliaRBI._3___Domain;
+using AvaliaRBI._3___Domain.Abstractions;
 using AvaliaRBI.Shared.Extensions;
 
 namespace AvaliaRBI._4___Repository;
@@ -7,10 +8,10 @@ public class DepartmentRepository : BaseRepository<Department>
 {
     private AssessmentCollectionRepository _collectionRepository;
     private SectorRepository _sectorRepository;
-    public DepartmentRepository() : base()
+    public DepartmentRepository(IBaseRepository<Sector> sectorRepository, IBaseRepository<AssessmentCollection> assessmentCollectionRepository) : base()
     {
-        _collectionRepository = new AssessmentCollectionRepository();
-        _sectorRepository = new SectorRepository();
+        _collectionRepository = assessmentCollectionRepository as AssessmentCollectionRepository;
+        _sectorRepository = sectorRepository as SectorRepository;
     }
 
     public override async Task<IEnumerable<Department>> GetAll()

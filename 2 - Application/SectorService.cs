@@ -8,9 +8,9 @@ namespace AvaliaRBI._2___Application;
 public class SectorService : BaseService<Sector>
 {
     private SectorRepository _repository;
-    public SectorService(IBaseRepository<Sector> repository, EmailService emailService) : base(repository, emailService)
+    public SectorService(IBaseRepository<Sector> repository, NotificationsService notificationsService) : base(repository, notificationsService)
     {
-        _repository = new SectorRepository();
+        _repository = repository as SectorRepository;
     }
 
     public async Task<Sector> GetByName(string name)

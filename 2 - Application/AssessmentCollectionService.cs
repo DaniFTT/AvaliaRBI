@@ -7,9 +7,9 @@ namespace AvaliaRBI._2___Application;
 public class AssessmentCollectionService : BaseService<AssessmentCollection>
 {
     private AssessmentCollectionRepository _repository;
-    public AssessmentCollectionService(IBaseRepository<AssessmentCollection> repository, EmailService emailService) : base(repository, emailService)
+    public AssessmentCollectionService(IBaseRepository<AssessmentCollection> repository, NotificationsService notificationsService) : base(repository, notificationsService)
     {
-        _repository = new AssessmentCollectionRepository();
+        _repository = repository as AssessmentCollectionRepository;
     }
 
     public async Task<AssessmentCollection> GetByName(string name)

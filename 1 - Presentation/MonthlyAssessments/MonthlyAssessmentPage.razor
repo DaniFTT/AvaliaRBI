@@ -2,6 +2,7 @@
 
 @using System.Net.Http.Json
 @using AvaliaRBI.Shared.Dialogs;
+@using AvaliaRBI.Shared.Extensions;
 @using AvaliaRBI.Shared.Functions
 @using AvaliaRBI._1___Presentation.AssessmentCollection.Dialogs;
 @using AvaliaRBI._1___Presentation.Employees.Dialogs;
@@ -53,7 +54,7 @@
             <Columns>
                 <PropertyColumn Property="@(x => x.ReferenceDate.Value.ToString("yyyy", cultura))" Title="Ano" Hidden="false" Groupable="true" Sortable="true" Filterable="true" Comparer="new MudBlazor.Utilities.NaturalComparer()" />
                 <PropertyColumn Property="@(x => x.ReferenceDate.Value.ToString("MMMM", cultura))" Title="Mês" Hidden="false" Groupable="true" Sortable="true" Filterable="true" Comparer="new MudBlazor.Utilities.NaturalComparer()" />
-                    <PropertyColumn Property="x => !string.IsNullOrEmpty(x.Description) ? x.Description : (!x.IsClosed ? GetScratchMessage(x) : GetConfirmationMessage(x)) " Title="Descrição" Hidden="false" Groupable="true" Sortable="true" Filterable="true" Comparer="new MudBlazor.Utilities.NaturalComparer()" />
+                    <PropertyColumn Property="x => !string.IsNullOrEmpty(x.Description) ? x.Description : (!x.IsClosed ? x.GetScratchMessage() : x.GetConfirmationMessage()) " Title="Descrição" Hidden="false" Groupable="true" Sortable="true" Filterable="true" Comparer="new MudBlazor.Utilities.NaturalComparer()" />
                 <PropertyColumn Property="x => x.Responsible" Title="Responsável" Hidden="false" Groupable="true" Sortable="true" Filterable="true" Comparer="new MudBlazor.Utilities.NaturalComparer()" />
                 <PropertyColumn Property="@(x => x.CreatedDate.Value.ToString("dd/MM/yyyy"))" Title="Criado em" Hidden="false" Groupable="true" Sortable="true" Filterable="true" Comparer="new MudBlazor.Utilities.NaturalComparer()" />
                 <TemplateColumn Title="Status" Hidden="false" Groupable="true" Sortable="true" Filterable="true">
@@ -216,10 +217,6 @@
 
         return false;
     };
-
-
-    private string GetScratchMessage(MonthlyAssessment assessment) => $"Rascunho de Avaliação ({assessment.ReferenceDate.Value.ToString("MM/yyyy")})...";
-    private string GetConfirmationMessage(MonthlyAssessment assessment) => $"Avaliação Finalizada {(assessment.ClosedDate.HasValue ? "(" + assessment.ClosedDate.Value.ToString("dd/MM/yyyy") + ")" : string.Empty)}";
 
     public DialogOptions GetDialogOptions()
     {

@@ -109,7 +109,7 @@
                                                         <MudText Typo="Typo.h6" Style="font-weight: 400;">Competência</MudText>
                                                     </MudItem>
                                                     <MudItem xs="12" Style="padding-top: 0;">
-                                                        <MudText Typo="Typo.h5" Style="font-size: 1.4rem;">@(assessment.ReferenceDate.HasValue ? GetFormatedDate(assessment.ReferenceDate.Value) : string.Empty)</MudText>
+                                                        <MudText Typo="Typo.h5" Style="font-size: 1.4rem;">@(assessment.ReferenceDate.HasValue ? assessment.ReferenceDate.Value.GetFormatedDate() : string.Empty)</MudText>
                                                     </MudItem>
                                                 </MudGrid>
                                             </MudElement>
@@ -221,10 +221,10 @@
 
         for (int i = lastThreeAssessments.Count() - 1; i >= 0; i--)
         {
-            HistoricData.Add(new HistoricGrade { ReferenceDate = GetFormatedDate(assessment.ReferenceDate.Value.AddDays(5).AddMonths(-(1 + i))), Note = lastThreeAssessments[i].Note });
+            HistoricData.Add(new HistoricGrade { ReferenceDate = assessment.ReferenceDate.Value.AddDays(5).AddMonths(-(1 + i)).GetFormatedDate(), Note = lastThreeAssessments[i].Note });
         }
 
-        HistoricData.Add(new HistoricGrade { ReferenceDate = GetFormatedDate(assessment.ReferenceDate.Value), Note = Math.Round(assessmentEmployee.Note, 2) });
+        HistoricData.Add(new HistoricGrade { ReferenceDate = assessment.ReferenceDate.Value.GetFormatedDate(), Note = Math.Round(assessmentEmployee.Note, 2) });
 
         HeaderStyle = ThemeConstants._isDarkMode ? "background-color:rgb(33 33 43 / 60%);" : "background-color: rgb(176 176 186 / 60%);";
 
@@ -300,17 +300,6 @@
             },
         };
 
-    }
-
-    public string GetFormatedDate(DateTime date)
-    {
-        CultureInfo cultura = new CultureInfo("pt-BR");
-
-        string mes = cultura.TextInfo.ToTitleCase(cultura.DateTimeFormat.GetMonthName(date.Month));
-
-        string ano = date.ToString("yyyy");
-
-        return $"{mes}/{ano}";
     }
 
     private List<HistoricGrade> HistoricData { get; set; } = new();

@@ -1,4 +1,5 @@
 ﻿using AvaliaRBI._3___Domain;
+using AvaliaRBI._3___Domain.Abstractions;
 
 namespace AvaliaRBI._4___Repository;
 
@@ -6,9 +7,9 @@ public class EmployeeRepository : BaseRepository<Employee>
 {
     private PositionRepository _positionRepository;
 
-    public EmployeeRepository() : base()
+    public EmployeeRepository(IBaseRepository<PositionJob> positionRepository) : base()
     {
-        _positionRepository = new PositionRepository();
+        _positionRepository = positionRepository as PositionRepository;
     }
 
     public override async Task<IEnumerable<Employee>> GetAll()

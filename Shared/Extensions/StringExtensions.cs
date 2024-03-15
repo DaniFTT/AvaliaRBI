@@ -1,5 +1,7 @@
-﻿using System;
+﻿using AvaliaRBI._3___Domain;
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -52,5 +54,19 @@ public static class StringExtensions
         }
 
     }
+
+    public static string GetFormatedDate(this DateTime date)
+    {
+        CultureInfo cultura = new CultureInfo("pt-BR");
+
+        string mes = cultura.TextInfo.ToTitleCase(cultura.DateTimeFormat.GetMonthName(date.Month));
+
+        string ano = date.ToString("yyyy");
+
+        return $"{mes}/{ano}";
+    }
+
+    public static string GetScratchMessage(this MonthlyAssessment assessment) => $"Rascunho de Avaliação ({assessment.ReferenceDate.Value.ToString("MM/yyyy")})...";
+    public static string GetConfirmationMessage(this MonthlyAssessment assessment) => $"Avaliação Finalizada {(assessment.ClosedDate.HasValue ? "(" + assessment.ClosedDate.Value.ToString("dd/MM/yyyy") + ")" : string.Empty)}";
 }
 

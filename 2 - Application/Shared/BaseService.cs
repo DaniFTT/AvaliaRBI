@@ -7,11 +7,11 @@ namespace AvaliaRBI._3___Domain.Abstractions
     public abstract class BaseService<T> : IBaseService<T> where T : BaseEntity, new()
     {
         private IBaseRepository<T> _repository;
-        protected EmailService _emailService;
-        public BaseService(IBaseRepository<T> repository, EmailService emailService)
+        protected NotificationsService _notificationsService;
+        public BaseService(IBaseRepository<T> repository, NotificationsService notificationService)
         {
             _repository = repository;
-            _emailService = emailService;
+            _notificationsService = notificationService;
         }
 
         public virtual async Task<Result<T>> GetById(int id)

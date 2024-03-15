@@ -18,16 +18,15 @@ public class EmployeeService : BaseService<Employee>
 {
     private EmployeeRepository _repository;
     private PositionRepository _positionRepository;
-    private PositionService _positionService;
     private ExcelService _excelService;
-    private NotificationsService _notificationsService;
+    private EmailService _emailService;
     public EmployeeService(IBaseRepository<Employee> repository, IBaseRepository<PositionJob> positionJob,
-        ExcelService excelService, NotificationsService notificationsService, EmailService emailService) : base(repository, emailService)
+        ExcelService excelService, NotificationsService notificationsService, EmailService emailService) : base(repository, notificationsService)
     {
         _repository = repository as EmployeeRepository;
         _positionRepository = positionJob as PositionRepository;
         _excelService = excelService;
-        _notificationsService = notificationsService;
+        _emailService = emailService;
     }
 
     public async Task<IEnumerable<Employee>> GetAllByReferenceDate(DateTime referenceDate)
@@ -49,38 +48,40 @@ public class EmployeeService : BaseService<Employee>
 
     ExcelField<EmployeeImportModel>[] HeaderFields = new ExcelField<EmployeeImportModel>[]  
     {
-        new ExcelField<EmployeeImportModel>(1, "Nome*", "Nome")
+        new ExcelField<EmployeeImportModel>(1, "Nome")
             .WithRequiredRule()
             .WithMaxLengthRule(200)
             .SetAction((employee, value) => employee.Name = value),
 
-        new ExcelField<EmployeeImportModel>(2, "RG*", "RG")
+        new ExcelField<EmployeeImportModel>(2, "RG")
             .WithRequiredRule()
             .WithRGRule()
             .SetAction((employee, value) => employee.RG = value.NormalizeRG()),
 
-        new ExcelField<EmployeeImportModel>(3, "Cargo*", "Cargo")
+        new ExcelField<EmployeeImportModel>(3, "Cargo")
             .WithRequiredRule()
             .WithMaxLengthRule(200)
             .SetAction((employee, value) => employee.PositionName = value),
 
-        new ExcelField<EmployeeImportModel>(4, "Departamento"),
-        new ExcelField<EmployeeImportModel>(5, "Setor"),
+        new ExcelField<EmployeeImportModel>(4, "Departamento", comment: "Este campo não é obrigatório para a inserção no sistema (Será preechido a partir do Cargo Selecionado)."),
+        new ExcelField<EmployeeImportModel>(5, "Setor", comment: "Este campo não é obrigatório para a inserção no sistema (Será preechido a partir do Cargo Selecionado)."),
 
-        new ExcelField<EmployeeImportModel>(6, "Data de Admissão*", "Data de Admissão")
+        new ExcelField<EmployeeImportModel>(6, "Data de Admissão")
             .WithRequiredRule()
             .WithNoFutureDateRule()
             .SetAction((employee, value) => employee.AdmissionDate = DateTime.ParseExact(value, "dd/MM/yyyy", CultureInfo.GetCultureInfo("pt-BR"))),
     };
 
-    public async Task ExportEmployeesToExcel(string processId)
+    public async Task<bool> ExportEmployeesToExcel(string processId)
     {
+        Notification notification = null;
+        ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+
         try
         {
-            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
             var employees = (await GetAll()).ToArray();
 
-            var notification = new Notification($"O Relatório em Excel de Funcionários está sendo gerado", Convert.ToDouble(employees.Length), processId);
+            notification = new Notification($"O Relatório de Funcionários está sendo gerado", Convert.ToDouble(employees.Length), processId);
             _notificationsService.AddNotification(notification);
 
             using var package = new ExcelPackage();
@@ -94,11 +95,8 @@ public class EmployeeService : BaseService<Employee>
                 var cell = worksheet.Cells[currentRow, field.Col];
                 cell.Value = name;
 
-                if (name.Contains("*"))
-                    cell.AddComment("Este campo é obrigatório para a inserção no sistema.", "Sistema");
-
-                if (name == "Departamento" || name == "Setor")
-                    cell.AddComment("Este campo não é obrigatório para a inserção no sistema (Será preechido a partir do Cargo Selecionado).", "Sistema");
+                if (!string.IsNullOrEmpty(field.Comment))
+                    cell.AddComment(field.Comment);
             }
 
             foreach (var employee in employees)
@@ -126,21 +124,27 @@ public class EmployeeService : BaseService<Employee>
             await _excelService.SalvarExcel(fileName, fileBytes);
 
             _notificationsService.RemoveNotification(notification);
-            _notificationsService.AddNotification($"O Relatório em Excel de Funcionários foi gerado com sucesso!");
+            _notificationsService.AddNotification($"O Relatório de Funcionários foi gerado com sucesso!");
         }
         catch (Exception ex)
         {
+            _notificationsService.RemoveNotification(notification);
+
             var erroMessage = "Não foi possível exportar o Relatório de Funcionários! Contate o Suporte.";
-            _notificationsService.AddNotification(erroMessage);
+            _notificationsService.AddNotification(erroMessage, Notification.NotificationType.Error);
             await _emailService.SendErrorToSupport(ex, erroMessage);
+
+            return false;
         }
         finally
         {
             GC.Collect();
         }
+
+        return true;
     }
 
-    public async Task ImportEmployeesByExcel(string fullPath, string processId)
+    public async Task<bool> ImportEmployeesByExcel(string fullPath, string processId)
     {
         Notification notification = null;
         ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
@@ -159,7 +163,7 @@ public class EmployeeService : BaseService<Employee>
                 importModel.AddNota(0, "Nenhum registro encontrado!");
                 importModel.Title = "Erro ao importar funcionários";
                 _notificationsService.AddNotification(new Notification(importModel));
-                return;
+                return false;
             }
 
             notification = new Notification($"A importação de Funcionários está sendo processada", Convert.ToDouble(totalRows), processId);
@@ -231,13 +235,17 @@ public class EmployeeService : BaseService<Employee>
                 _notificationsService.RemoveNotification(notification);
 
             var erroMessage = "Não foi possível importar os Funcionários! Contate o Suporte.";
-            _notificationsService.AddNotification(erroMessage);
+            _notificationsService.AddNotification(erroMessage, Notification.NotificationType.Error);
             await _emailService.SendErrorToSupport(ex, erroMessage);
+
+            return false;
         }
         finally
         {
             GC.Collect();
         }
+
+        return true;
     }
 }
 

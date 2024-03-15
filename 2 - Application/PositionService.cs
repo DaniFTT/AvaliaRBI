@@ -8,9 +8,9 @@ namespace AvaliaRBI._2___Application;
 public class PositionService : BaseService<PositionJob>
 {
     private PositionRepository _repository;
-    public PositionService(IBaseRepository<PositionJob> repository, EmailService emailService) : base(repository, emailService)
+    public PositionService(IBaseRepository<PositionJob> repository, NotificationsService notificationsService) : base(repository, notificationsService)
     {
-        _repository = new PositionRepository();
+        _repository = repository as PositionRepository;
     }
 
     public async Task<PositionJob> GetByName(string name)

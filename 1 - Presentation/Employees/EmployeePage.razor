@@ -209,9 +209,14 @@
             return;
         }
 
-        await EmployeeService.ExportEmployeesToExcel(processId);
+        var result = await EmployeeService.ExportEmployeesToExcel(processId);
+        if (result)
+        {
+            Snackbar.Add($"Funcionários exportados com sucesso!", MudBlazor.Severity.Success);
+            return;
+        }
 
-        Snackbar.Add($"Funcionários exportados com sucesso!", MudBlazor.Severity.Success);
+        Snackbar.Add($"Não foi possível exportar o Relatório de Funcionários!", MudBlazor.Severity.Error);
     }
 
     private async Task OpenImportDialog()
@@ -258,12 +263,20 @@
                 await importModel.File.OpenReadStream().CopyToAsync(fileStream);
             }
 
-            await EmployeeService.ImportEmployeesByExcel(tempFilePath, importModel.ProcessId);
+            var result = await EmployeeService.ImportEmployeesByExcel(tempFilePath, importModel.ProcessId);
+
             employees = (await EmployeeService.GetAll()).ToList();
 
             File.Delete(tempFilePath);
 
-            Snackbar.Add($"Funcionários importados com sucesso!", MudBlazor.Severity.Success);
+            if (result)
+            {
+                Snackbar.Add($"Funcionários importados com sucesso!", MudBlazor.Severity.Success);
+                return;
+            }
+
+            Snackbar.Add($"Não foi possível importar os Funcionários!", MudBlazor.Severity.Error);
+
         }
         catch (Exception ex)
         {

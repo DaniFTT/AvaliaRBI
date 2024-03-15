@@ -8,9 +8,9 @@ namespace AvaliaRBI._2___Application;
 public class DepartmentService : BaseService<Department>
 {
     private DepartmentRepository _repository;
-    public DepartmentService(IBaseRepository<Department> repository, EmailService emailService) : base(repository, emailService)
+    public DepartmentService(IBaseRepository<Department> repository, NotificationsService notificationsService) : base(repository, notificationsService)
     {
-        _repository = new DepartmentRepository();
+        _repository = repository as DepartmentRepository;
     }
 
     public async Task<Department> GetByName(string name)

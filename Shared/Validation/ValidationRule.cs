@@ -1,5 +1,6 @@
 ﻿using AvaliaRBI.Shared.Extensions;
 using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.IdentityModel.Tokens;
 using OfficeOpenXml;
 using System;
@@ -17,14 +18,16 @@ public class ExcelField<T> where T : class
     public int Col { get; set; }
     public string Header { get; set; }
     public string FieldName { get; set; }
+    public string Comment { get; set; }
     public List<IValidationRule<string>> Rules { get; set; }
 
     private Action<T, string> _setValueAction;
 
-    public ExcelField(int col, string header, string fieldName = null)
+    public ExcelField(int col, string header, string comment = null, string fieldName = null)
     {
         Col = col;
         Header = header;
+        Comment = comment;
         FieldName = fieldName ?? header;
         Rules = new List<IValidationRule<string>>();
     }
@@ -32,27 +35,28 @@ public class ExcelField<T> where T : class
     public ExcelField<T> WithRequiredRule()
     {
         Rules.Add(new NotEmptyValidationRule());
-
+        Comment += " - Este campo é obrigatório para a inserção no sistema. \n";
         return this;
     }
 
     public ExcelField<T> WithMaxLengthRule(int maxLength)
     {
         Rules.Add(new MaxLengthValidationRule(maxLength));
+        Comment += $" - Este campo deve ter no máximo {maxLength} caracteres. \n";
         return this;
     }
 
     public ExcelField<T> WithRGRule()
     {
         Rules.Add(new RGValidationRule());
-
+        Comment += $" - Este campo de RG deve ser preenchido apenas com os 9 digitos númericos, ou no formatado de 12 digitos: 00.000.000.-0. \n";
         return this;
     }
 
     public ExcelField<T> WithNoFutureDateRule()
     {
         Rules.Add(new NotFutureDateValidationRule());
-
+        Comment += $" - Este campo deve ser preenchido com uma data no formato dd/mm/yyyy, não podendo ser uma data futura.  \n";
         return this;
     }
 

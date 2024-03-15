@@ -1,4 +1,5 @@
 ﻿using AvaliaRBI._3___Domain;
+using AvaliaRBI._3___Domain.Abstractions;
 using AvaliaRBI._3___Domain.Enum;
 
 namespace AvaliaRBI._4___Repository;
@@ -6,9 +7,9 @@ namespace AvaliaRBI._4___Repository;
 public class AssessmentEmployeeRepository : BaseRepository<AssessmentEmployee>
 {
     public PositionRepository PositionRepository { get; set; }
-    public AssessmentEmployeeRepository() : base()
+    public AssessmentEmployeeRepository(IBaseRepository<PositionJob> positionRepository) : base()
     {
-        PositionRepository = new PositionRepository();
+        PositionRepository = positionRepository as PositionRepository;
     }
 
 
