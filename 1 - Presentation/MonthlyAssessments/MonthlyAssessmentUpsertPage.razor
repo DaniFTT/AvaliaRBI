@@ -24,13 +24,13 @@
             <MudText Typo="Typo.h6" Style="align-self: center;padding-left: 1rem; font-size: 1.1rem">@(IsReadonly ? "Detalhes" : (AssessmentId.HasValue ? "Edição" : "Criação")) da Avaliação</MudText>
         </MudItem>
 
-        <MudItem xs="6" Style="text-align: right; align-self: center;  padding-right: 2rem;">
+        <MudItem xs="6" Style="text-align: right; align-self: center;  padding-right: 1rem;">
             @if (IsEditable && !IsClosed)
             {                
                 <MudButton Class="buttonicon-extra-exmall" Variant="Variant.Filled" StartIcon="fas fa-floppy-disk" IconSize="Size.Small" Color="Color.Primary" Style="margin-right: 0.5rem; width: fit-content;" Size="Size.Small" OnClick="async () => await SaveConfirmation()" title="Concluir Avaliação">Concluir</MudButton>
                 <MudButton Class="buttonicon-extra-exmall" Variant="Variant.Outlined" StartIcon="fas fa-box-archive" IconSize="Size.Small" Color="Color.Primary" Style="width: fit-content; margin-right: 0.5rem" Size="Size.Small" OnClick="async () => await SaveScratch()" title="Salvar Rascunho">Salvar</MudButton>
                 <MudIconButton Icon="fas fa-upload" Color="Color.Default" Size="Size.Small" Style="margin-right: 0.5rem; font-size: 0.5rem" OnClick="() => OpenImportDialog()" Title="Importar Excel"></MudIconButton>
-                <MudButton Disabled="_processingExportExcel" Color="Color.Default" Size="Size.Small" Style="font-size: 0.5rem; min-width: 30px; margin-right: 0.5rem;" OnClick="async () =>
+                <MudButton Disabled="_processingExportExcel" Color="Color.Default" Size="Size.Small" Style="font-size: 0.5rem; min-width: 30px;" OnClick="async () =>
                     {
                         var result = !_processingExportExcel ? await ExportToExcel() : await VoidButton();
                     }" >
@@ -133,22 +133,29 @@
 
                 @if (showDepartments)
                 {
-                    <div class="d-flex" style="margin-top: 2rem; align-items: center">
-                        <MudText Typo="Typo.body1" Style="font-weight: 400; font-size: 1.1rem; width: 75%; color: #524848;">
+                    <div class="d-flex" style="margin-top: 2rem; margin-bottom: 1rem; align-items: center; justify-content: space-between;">
+                        <MudText Typo="Typo.body1" Style="font-weight: 400; font-size: 1.1rem; color: #524848; padding-top: 1rem;">
                             Departamentos
                         </MudText>
 
-                        @if (IsEditable){
-                            <MudText Typo="Typo.body1" Style="font-size: 0.9rem;width: 10%; text-align: right; margin-top: 1rem; padding-right: 1rem;">Ordernar Por: </MudText>
-                            <MudSelect Dense="true" Margin="Margin.Dense"  T="int" Style="font-size: 0.5rem" Value="@assessment.OrderByDepartment" ValueChanged="OrderDepartmentsChanged" Variant="Variant.Text">
-                                <MudSelectItem Value="0">Nome</MudSelectItem>
-                                <MudSelectItem Value="1">Quantidade de Funcionários</MudSelectItem>
-                            </MudSelect>
-                        }
+                        <div class="d-flex" style="align-items: center; ">
+
+                            @if (IsEditable){
+                                <MudText Typo="Typo.body1" Style="font-size: 0.9rem; text-align: right; margin-top: 1rem; padding-right: 1rem;">Ordernar Por: </MudText>
+                                <MudSelect Dense="true" Margin="Margin.Dense" T="int" Style="font-size: 0.5rem; width: 180px;" Value="@assessment.OrderByDepartment" ValueChanged="OrderDepartmentsChanged" Variant="Variant.Text">
+                                    <MudSelectItem Value="0">Nome</MudSelectItem>
+                                    <MudSelectItem Value="1">Qtd. de Funcionários</MudSelectItem>
+                                </MudSelect>
+                            }
+                            <MudIconButton Size="Size.Small" Style="margin-left: 1rem; margin-right: 1rem; margin-top: 1rem; text-align: right;" Title="@($"{(expandPanels ? "Recolher" : "Expandir")} Paineis")" Icon="@expandPanelsIcon" OnClick="() => ToggleExpandedPanels()">
+
+                            </MudIconButton>
+                        </div>
+
 
                     </div>
 
-                    <MudExpansionPanels MultiExpansion="true" DisableBorders Elevation="4" Dense="true" DisableGutters="true" Class="mt-2">
+                    <MudExpansionPanels @ref="expasionPanels" MultiExpansion="true" DisableBorders Elevation="2" Dense="true" DisableGutters="true" Class="mt-2">
 
                     @for (int i = 0; i < assessmentModels.Count; i++)
                     {
@@ -194,7 +201,7 @@
                                             </MudText>
                                         }
 
-                                        <MudTabs PanelClass="px-4 pb-4 pt-4" Elevation="5" Rounded ApplyEffectsToContainer Style="margin-top: 1rem">
+                                        <MudTabs PanelClass="px-4 pb-4 pt-4" Elevation="2" Rounded ApplyEffectsToContainer Style="margin-top: 1rem">
 
                                             
                                             @if(!assessmentModel.AssessmentAspects.Any())
@@ -228,9 +235,9 @@
                                                                 ">
                                                                     <MudIconButton Color="Color.Primary" Size="@Size.Small" Title="Resultado" Icon="@Icons.Material.Filled.FileOpen" OnClick="() => SeeAssessmentEmployeeDetails(employment)" />
                                                                 </div>
-                                                                
 
-                                                                <div style="width: 12%;">
+
+                                                                    <div style="max-width: 12%;min-width: 12%;">
                                                                         <MudText title="Funcionário" Typo="Typo.body2" Style="font-size: 0.8rem; padding-top: 0.1rem;" Class="ellipsis">
                                                                         Funcionário
                                                                     </MudText>
@@ -240,7 +247,7 @@
                                                                     <div style="height: 1px; border-bottom: 1.5px solid #737379; padding-top: 0.1rem;">
                                                                     </div>
                                                                 </div>
-                                                                <div style="width: 8%;">
+                                                                    <div style="max-width: 8%;min-width: 8%;">
                                                                         <MudText title="RG" Typo="Typo.body2" Style="font-size: 0.8rem; padding-top: 0.1rem;" Class="ellipsis">
                                                                         RG
                                                                     </MudText>
@@ -251,7 +258,7 @@
                                                                     </div>
                                                                 </div>
 
-                                                                <div style="width: 7%;">
+                                                                    <div style="max-width: 8%;min-width: 8%;">
                                                                         <MudText title="Admissão" Typo="Typo.body2" Style="font-size: 0.8rem; padding-top: 0.1rem" Class="ellipsis">
                                                                         Admissão
                                                                     </MudText>
@@ -357,6 +364,33 @@
     public bool IsReadonly { get; set; }
     public bool IsClosed { get; set; }
 
+
+    MudExpansionPanels expasionPanels { get; set; }
+    bool expandPanels { get; set; } = false;
+    string expandPanelsIcon { get; set; } = "fas fa-chevron-down";
+
+    public void ToggleExpandedPanels(bool? value = null)
+    {
+        if(value.HasValue)
+        {
+            expandPanels = value.Value;
+        }
+        else
+        {
+            expandPanels = !expandPanels;
+        }
+
+
+        if(expandPanels){
+            expandPanelsIcon = "fas fa-chevron-up";
+            expasionPanels.ExpandAll();
+
+            return;
+        }
+
+        expandPanelsIcon = "fas fa-chevron-down";
+        expasionPanels.CollapseAll();
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -912,6 +946,8 @@
             var result = await MonthlyAssessmentService.ImportAssessmentByExcel(tempFilePath, importModel.ProcessId, assessment, assessmentModels);     
             if (result)
             {
+                await SaveScratch();
+                ToggleExpandedPanels(false);
                 Snackbar.Add($"Modelo de Avaliação importado com sucesso!", MudBlazor.Severity.Success);
                 return;
             }

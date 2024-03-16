@@ -209,7 +209,7 @@ a, .btn-link {
 
 @media (min-width: 960px) {
     .mud-drawer-open-responsive-md-left .mud-main-content {
-    margin-left: calc(var(--mud-drawer-width-left) - 15px);
+    margin-left: calc(var(--mud-drawer-width-left) - 20px);
 }
 
 .mud-nav-group * .mud-navmenu .mud-nav-item .mud-nav-link {

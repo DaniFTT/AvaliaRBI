@@ -7,6 +7,7 @@ using AvaliaRBI._4___Repository;
 using AvaliaRBI.Shared.Extensions;
 using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Wordprocessing;
+using Microsoft.IdentityModel.Tokens;
 using OfficeOpenXml;
 using static AvaliaRBI._2___Application.Shared.Notification;
 
@@ -44,7 +45,7 @@ public class MonthlyAssessmentService : BaseService<MonthlyAssessment>
         }
     }
 
-    public async Task<bool> ImportAssessmentByExcel(string fullPath, string processId, MonthlyAssessment assessment, List<AssessmentModel> assessmentModel)
+    public async Task<bool> ImportAssessmentByExcel(string fullPath, string processId, MonthlyAssessment assessment, List<AssessmentModel> assessmentsModel)
     {
         Notification notification = null;
         ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
@@ -55,7 +56,7 @@ public class MonthlyAssessmentService : BaseService<MonthlyAssessment>
             var firstWorksheet = package.Workbook.Worksheets.FirstOrDefault();
 
             var importModel = new ImportNotificationModel(Path.GetFileName(fullPath));
-            if (firstWorksheet.Name != "Informações Gerais" )
+            if (firstWorksheet.Name != "Informações Gerais")
             {
                 importModel.AddNota(firstWorksheet.Name, 0, "Arquivo Inválido, exporte o Modelo de Avaliação, preencha apenas seus valores e importe novamente!");
                 importModel.Title = "Erro ao importar modelo de avaliação";
@@ -70,15 +71,158 @@ public class MonthlyAssessmentService : BaseService<MonthlyAssessment>
                 _notificationsService.AddNotification(new Notification(importModel));
                 return false;
             }
+            var competencia = firstWorksheet.Cells["B3:B3"].Value;
+            if (competencia != null && competencia.ToString() != assessment.ReferenceDate.Value.GetFormatedDate())
+            {
+                importModel.AddNota(firstWorksheet.Name, 1, "Competência inválida para essa avaliação!");
+                importModel.Title = "Erro ao importar modelo de avaliação";
+                _notificationsService.AddNotification(new Notification(importModel));
+                return false;
+            }
 
-            notification = new Notification($"A importação do modelo de avaliação está sendo processada", Convert.ToDouble(assessmentModel.Count), processId);
+            notification = new Notification($"A importação do modelo de avaliação está sendo processada", Convert.ToDouble(assessmentsModel.SelectMany(a => a.Employees).Count()), processId);
             _notificationsService.AddNotification(notification);
 
-            
+            var worksheets = package.Workbook.Worksheets.Where(w => w.Name != "Informações Gerais").ToArray();
+            foreach (var worksheet in worksheets)
+            {
+                var assessmentModel = assessmentsModel.FirstOrDefault(a => a.Department.Name == worksheet.Name);
+                if (assessmentModel == null)
+                {
+                    importModel.AddNota(worksheet.Name, 0, "Departamento não encontrado na avaliação!");
+                    continue;
+                }
+
+                var currentRow = 3;
+                var currentColumn = 4;
+
+                var emploteeHeader = worksheet.Cells[currentRow, 1, currentRow, 1].Value;
+                var isHeaderRow = emploteeHeader != null && emploteeHeader.ToString() == "Funcionários";
+                if (isHeaderRow)
+                {
+                    importModel.AddNota(worksheet.Name, currentRow, "Cabeçalho da tabela de avaliação inválido");
+                    continue;
+                }
+
+                var importModels = new List<ImportAssessmentModel>();
+                do
+                {
+                    var criteriaName = worksheet.Cells[currentRow, currentColumn, currentRow, currentColumn].Value;
+                    if (criteriaName == null || string.IsNullOrEmpty(criteriaName.ToString()))
+                        break;
+
+                    var criterias = assessmentModel.AssessmentAspects.SelectMany(aa => aa.Criteria).ToArray();
+                    var criteriaModel = criterias.FirstOrDefault(c => c.Name.Trim().Equals(criteriaName.ToString().Trim(), StringComparison.OrdinalIgnoreCase));
+                    if (criteriaModel == null)
+                    {
+                        importModel.AddNota(worksheet.Name, currentRow, $"Critério {criteriaName.ToString()} não encontrado na avaliação");
+                        currentColumn++;
+                        continue;
+                    }
+
+                    importModels.Add(new ImportAssessmentModel(criteriaModel, currentColumn));
+                    currentColumn++;
+
+                } while (true);
+
+                do
+                {
+                    currentRow++;
+
+                    var employeeNameCell = worksheet.Cells[currentRow, 1, currentRow, 1].Value ?? string.Empty;
+                    var rgCell = worksheet.Cells[currentRow, 2, currentRow, 2].Value ?? string.Empty;
+
+                    if (string.IsNullOrEmpty(employeeNameCell.ToString()) || string.IsNullOrEmpty(rgCell.ToString()))
+                        break;
+
+                    importModel.ProcessedCount++;
+
+                    var employeeAssessment = assessmentModel.AssessmentEmployees.FirstOrDefault(a => a.Employee.RG.Trim().Equals(rgCell.ToString().Trim(), StringComparison.OrdinalIgnoreCase));
+                    if (employeeAssessment == null)
+                    {
+                        importModel.AddNota(worksheet.Name, currentRow, $"Funcionário {employeeNameCell.ToString()} - {rgCell.ToString()} não encontrado na avaliação");
+                        continue;
+                    }
+
+                    foreach (var currentImport in importModels)
+                    {
+                        var employeeCriteria = employeeAssessment.AssessmentCollections
+                            .SelectMany(ac => ac.AssessmentAspects
+                            .SelectMany(aa => aa.Criteria)).FirstOrDefault(c => c.Id == currentImport.Criteria.Id);
 
 
+                        var criteriaValueCell = worksheet.Cells[currentRow, currentImport.Col, currentRow, currentImport.Col].Value ?? string.Empty;
+                        if (criteriaValueCell == null || string.IsNullOrEmpty(criteriaValueCell.ToString()))
+                        {
+                            switch (employeeCriteria.CriteriaType)
+                            {
+                                case CriteriaType.Integer:
+                                    employeeCriteria.ValueCriteria.ValueInt = 0;
+                                    break;
+                                case CriteriaType.Decimal:
+                                    employeeCriteria.ValueCriteria.ValueDecimal = 0.0;
+                                    break;
+                                case CriteriaType.Percentage:
+                                    employeeCriteria.ValueCriteria.ValuePercentage = 0.0;
+                                    break;
+                                case CriteriaType.Time:
+                                    employeeCriteria.ValueCriteria.ValueTime = "00:00";
+                                    break;
+                                default:
+                                    break;
+                            }
+                            continue;
+                        }
 
+                        switch (employeeCriteria.CriteriaType)
+                        {
+                            case CriteriaType.Integer:
 
+                                if (!int.TryParse(criteriaValueCell.ToString(), out var intValue))
+                                {
+                                    importModel.AddNota(worksheet.Name, currentRow, $"O valor informado para o critério {employeeCriteria.Name} é inválido para o tipo Inteiro.");
+                                    continue;
+                                }
+
+                                employeeCriteria.ValueCriteria.ValueInt = intValue;
+                                break;
+                            case CriteriaType.Decimal:
+                                if (!double.TryParse(criteriaValueCell.ToString(), out var doubleValue))
+                                {
+                                    importModel.AddNota(worksheet.Name, currentRow, $"O valor informado para o critério {employeeCriteria.Name} é inválido para o tipo Decimal.");
+                                    continue;
+                                }
+
+                                employeeCriteria.ValueCriteria.ValueDecimal = doubleValue;
+                                break;
+                            case CriteriaType.Percentage:
+                                if (!double.TryParse(criteriaValueCell.ToString(), out var percentageValue))
+                                {
+                                    importModel.AddNota(worksheet.Name, currentRow, $"O valor informado para o critério {employeeCriteria.Name} é inválido para o tipo Porcentagem.");
+                                    continue;
+                                }
+
+                                employeeCriteria.ValueCriteria.ValuePercentage = percentageValue;
+                                break;
+                            case CriteriaType.Time:
+                                if (!DateTime.TryParse(criteriaValueCell.ToString(), out var valueTime))
+                                {
+                                    importModel.AddNota(worksheet.Name, currentRow, $"O valor informado para o critério {employeeCriteria.Name} é inválido para o tipo Tempo. Use o Formato HH:mm");
+                                    continue;
+                                }
+
+                                employeeCriteria.ValueCriteria.ValueTime = valueTime.ToString("HH:mm");
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
+                    importModel.UpdatedCount++;
+                    _notificationsService.UpdateProgressNotification(notification, (currentRow - 3));
+
+                } while (true);
+            }
 
             _notificationsService.RemoveNotification(notification);
 
@@ -470,16 +614,14 @@ public class MonthlyAssessmentService : BaseService<MonthlyAssessment>
         textStyle.Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Top;
     }
 
-    public class ExportAssessmentModel
+    public class ImportAssessmentModel
     {
-        public string AspectId { get; set; }
-        public string CriteriaId { get; set; }
+        public AssessmentCriteria Criteria { get; set; }
         public int Col { get; set; }
 
-        public ExportAssessmentModel(string aspectId, string criteriaId, int col)
+        public ImportAssessmentModel(AssessmentCriteria criteria, int col)
         {
-            AspectId = aspectId;
-            CriteriaId = criteriaId;
+            Criteria = criteria;
             Col = col;
         }
     }

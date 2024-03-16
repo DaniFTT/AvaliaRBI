@@ -71,7 +71,7 @@ public class NotificationsService
 
     private void RemoveOldNotifications()
     {
-        Notifications = Notifications.Where(n => n.DateTime.Date >= DateTime.Now.Date).ToList();
+        Notifications = Notifications.Where(n => n.DateTime.Date >= DateTime.Now.AddDays(-3).Date).ToList();
         SaveNotifications();
     }
 
