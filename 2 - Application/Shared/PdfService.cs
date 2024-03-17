@@ -24,8 +24,6 @@ public class PdfService
     private readonly string styledHtmlTemplate;
     private EmailService EmailService;
     private NotificationsService NotificationsService;
-    public static String FOOTER = "<table width=\"100%\" border=\"0\"><tr><td>Footer</td><td align=\"right\">Some title</td></tr></table>";
-
 
     public PdfService(EmailService emailService, NotificationsService notificationsService)
     {
@@ -164,53 +162,6 @@ public class CustomEndPageEventHandler : IEventHandler
         this.employeeName = employeeName;
         this.responsibleName = responsibleName;
     }
-
-    //public void HandleEvent(Event @event)
-    //{
-    //    PdfDocumentEvent docEvent = (PdfDocumentEvent)@event;
-    //    PdfDocument pdf = docEvent.GetDocument();
-    //    PdfPage page = docEvent.GetPage();
-    //    Rectangle pageSize = page.GetPageSize();
-    //    PdfCanvas pdfCanvas = new PdfCanvas(page.NewContentStreamBefore(), page.GetResources(), pdf);
-
-    //    float signatureAreaHeight = 80; // Aumentado para acomodar mais conteúdo
-    //    float margin = 36; // Margem lateral para o conteúdo.
-    //    float yPos = margin;
-
-    //    Rectangle signatureArea = new Rectangle(margin, yPos, pageSize.GetWidth() - (2 * margin), signatureAreaHeight);
-
-    //    Canvas canvas = new Canvas(pdfCanvas, signatureArea);
-
-    //   canvas.Add(new Paragraph("Data da Assinatura: ")
-    //       .SetFontSize(10).SetMarginTop(10)); // Ajuste o tamanho da fonte conforme necessário
-    //    canvas.Add(new Paragraph("Nome completo do Responsável: ")
-    //        .SetFontSize(10)); // Ajuste o tamanho da fonte conforme necessário
-    //    canvas.Add(new Paragraph("Assinatura: ______________________")
-    //        .SetFontSize(10)); // Ajuste o tamanho da fonte conforme necessário
-
-    //    canvas.Close(); // Fechando o canvas para aplicar as alterações.
-    //}
-
-    //public void HandleEvent(Event @event)
-    //{
-    //    PdfDocumentEvent docEvent = (PdfDocumentEvent)@event;
-    //    PdfDocument pdf = docEvent.GetDocument();
-    //    PdfPage page = docEvent.GetPage();
-    //    PdfCanvas pdfCanvas = new PdfCanvas(page.NewContentStreamBefore(), page.GetResources(), pdf);
-    //    Rectangle pageSize = page.GetPageSize();
-
-    //    // Definindo a área para cabeçalho e rodapé
-    //    Rectangle footerArea = new Rectangle(36, pageSize.GetBottom(), pageSize.GetWidth(), 72);
-
-    //    // Adicionando rodapé
-    //    Canvas canvasFooter = new Canvas(pdfCanvas, footerArea);
-    //    canvasFooter.Add(new Paragraph($"_____ de _________________ de {DateTime.Now.Year}").SetFontSize(10));
-
-    //    canvasFooter.Add(new Paragraph("____________________________________").SetFontSize(10));
-    //    canvasFooter.Add(new Paragraph(responsibleName).SetFontSize(10));
-
-    //    canvasFooter.Close();
-    //}
 
     public void HandleEvent(Event @event)
     {
