@@ -476,6 +476,9 @@
                 .ToList();
 
             assessmentEmployees.AddRange(newEmployeesAssessments);
+
+            foreach (var assessmentEmployee in assessmentEmployees)
+                assessmentEmployee.Employee = employees.FirstOrDefault(e => e.Id == assessmentEmployee.Employee.Id);         
         }
         else
         {                     
@@ -744,7 +747,7 @@
         assessment.ClosedDate = null;
 
         var updateResult = await MonthlyAssessmentService.Update(assessment.Id, assessment);
-        if(!updateResult.IsSuccess)
+        if(updateResult.IsSuccess)
         {
             await DialogService.ShowError("Não foi possivel reabrir essa Avaliação! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: assessment);
             return;
@@ -978,8 +981,7 @@
             RuleFor(p => p.ReferenceDate)
                 .NotNull().WithMessage("A Competência é obrigatória")
                 .NotEqual(default(DateTime)).WithMessage("A Competência é obrigatória")
-                .NotEmpty().WithMessage("A Competência é obrigatória")
-                .LessThanOrEqualTo(DateTime.Now.Date.AddMonths(-1)).WithMessage("Não é possivel selecionar uma Competência Atual ou Futura");
+                .NotEmpty().WithMessage("A Competência é obrigatória");
         }
 
         public Func<object, string, Task<IEnumerable<string>>> ValidateValue => async (model, propertyName) =>
