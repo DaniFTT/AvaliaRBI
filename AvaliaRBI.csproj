@@ -13,7 +13,7 @@
         <EnableDefaultCssItems>false</EnableDefaultCssItems>
 
         <!-- Display name -->
-        <ApplicationTitle>AvaliaRBI</ApplicationTitle>
+        <ApplicationTitle>Valorizando Talentos</ApplicationTitle>
 
         <!-- App Identifier -->
         <ApplicationId>com.companyname.avaliarbi</ApplicationId>

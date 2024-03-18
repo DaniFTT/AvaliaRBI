@@ -473,8 +473,7 @@ public class MonthlyAssessmentService : BaseService<MonthlyAssessment>
 
             var tableRange = worksheetDepartment.Cells[startRow, startColumn, endRow, endColumn];
 
-            var table = worksheetDepartment.Tables.Add(tableRange, "Table_" + departmentName);
-            table.ShowHeader = true;
+            var table = worksheetDepartment.Tables.Add(tableRange, "Table_" + departmentName.Replace(" ", ""));
             table.ShowFilter = true;
             table.TableStyle = OfficeOpenXml.Table.TableStyles.Light9;
 

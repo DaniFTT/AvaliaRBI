@@ -747,7 +747,7 @@
         assessment.ClosedDate = null;
 
         var updateResult = await MonthlyAssessmentService.Update(assessment.Id, assessment);
-        if(updateResult.IsSuccess)
+        if(!updateResult.IsSuccess)
         {
             await DialogService.ShowError("Não foi possivel reabrir essa Avaliação! \nTente Novamente mais tarde ou Entre em Contato com o Suporte", obj: assessment);
             return;

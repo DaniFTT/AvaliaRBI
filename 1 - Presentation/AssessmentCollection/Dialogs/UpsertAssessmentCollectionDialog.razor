@@ -523,7 +523,7 @@
         if (invalidAspects.Any())
         {
             _processing = false;
-            await DialogService.ShowError($"Os seguintes Aspcetos estão sem Critérios definidos: \n\n{string.Join(",\n", invalidAspects.Select(a => a.Name))}");
+            await DialogService.ShowError($"Os seguintes Aspectos estão sem Critérios definidos: \n\n{string.Join(",\n", invalidAspects.Select(a => a.Name))}");
             return;
         }
 
@@ -531,7 +531,15 @@
         if (invalidCriterias.Any())
         {
             _processing = false;
-            await DialogService.ShowError($"Os seguintes Aspcetos estão com valores de Critérios indefinidos: \n\n{string.Join(",\n", invalidCriterias.Select(a => a.Name))}");
+            await DialogService.ShowError($"Os seguintes Aspectos estão com valores de Critérios indefinidos: \n\n{string.Join(",\n", invalidCriterias.Select(a => a.Name))}");
+            return;
+        }
+
+        var duplicateNames = newCollection.AssessmentAspects.SelectMany(aa => aa.Criteria.GroupBy(c => c.Name.Trim())).Where(c => c.Count() > 1).ToArray();
+        if (duplicateNames.Any())
+        {
+            _processing = false;
+            await DialogService.ShowError($"Os seguintes Critério estão com nomes duplicados: \n\n{string.Join(",\n", duplicateNames.SelectMany(a => a).DistinctBy(c => c.Name).Select(c => c.Name))}");
             return;
         }
 
