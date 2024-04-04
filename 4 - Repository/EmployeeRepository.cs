@@ -37,7 +37,8 @@ public class EmployeeRepository : BaseRepository<Employee>
     {
         await SetUpDb();
 
-        var employees = await _connection.Table<Employee>().Where(x => x.AdmissionDate <= referenceDate.Date).ToListAsync();
+        referenceDate = referenceDate.AddMonths(1).Date;
+        var employees = await _connection.Table<Employee>().Where(x => x.AdmissionDate < referenceDate).ToListAsync();
         await IncludePositionObj(employees);
 
         return employees;

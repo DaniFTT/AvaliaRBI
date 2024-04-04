@@ -203,7 +203,7 @@
         if (string.IsNullOrWhiteSpace(_searchString))
             return true;
 
-        if (x.Description.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+        if (!string.IsNullOrEmpty(x.Description) && x.Description.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             return true;
 
         if (x.ReferenceDate.Value.ToShortDateString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
