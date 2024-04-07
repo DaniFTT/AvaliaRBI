@@ -46,10 +46,10 @@ public class ExcelField<T> where T : class
         return this;
     }
 
-    public ExcelField<T> WithRGRule()
+    public ExcelField<T> WithCPFRule()
     {
         Rules.Add(new RGValidationRule());
-        Comment += $" - Este campo de RG deve ser preenchido apenas com os 9 digitos númericos, ou no formatado de 12 digitos: 00.000.000.-0. \n";
+        Comment += $" - Este campo de CPF deve ser preenchido apenas com os 11 digitos númericos, ou no formatado de 14 digitos: 000.000.000.-00 \n";
         return this;
     }
 
@@ -197,7 +197,7 @@ public class RGValidationRule : IValidationRule<string>
 
     public ValidationResult Validate(string value, string fieldName = "RG")
     {
-        var rg = value.NormalizeRG();
+        var rg = value.NormalizeCPF();
 
         return new ValidationResult
         {

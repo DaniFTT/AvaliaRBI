@@ -39,6 +39,24 @@
         function triggerResizeEvent() {
             window.dispatchEvent(new Event('resize'));
         }
+
+        window.clickOutside = {
+            listenForOutsideClicks: function (element, dotnetHelper) {
+                function handleClickOutside(event) {
+                    if (element && !element.contains(event.target)) {
+                        dotnetHelper.invokeMethodAsync('ClosePopover');
+                        document.removeEventListener('click', handleClickOutside);
+                    }
+                }
+
+                document.addEventListener('click', handleClickOutside, true);
+            }
+        };
+
+        window.addEventListener('click', function (event) {
+            DotNet.invokeMethodAsync('SeuAssembly', 'FecharPopoverSeClicadoFora', event.target.id)
+                .catch(err => console.error(err));
+        }, true);
     </script>
 </body>
 

@@ -10,8 +10,8 @@ public class Employee : BaseEntity
     [NotNull, MaxLength(200)]
     public string Name { get; set; }
 
-    [NotNull, MaxLength(12)]
-    public string RG { get; set; }
+    [NotNull, MaxLength(14)]
+    public string CPF { get; set; }
 
     [MaxLength(16)]
     public string PhoneNumber { get; set; }
@@ -30,10 +30,10 @@ public class Employee : BaseEntity
         Position = new PositionJob();
     }
 
-    public Employee(string name, string rg, DateTime admissionDate, PositionJob position)
+    public Employee(string name, string cpf, DateTime admissionDate, PositionJob position)
     {
         Name = name.Trim();
-        RG = rg;
+        CPF = cpf;
         AdmissionDate = admissionDate;
         PositionId = position.Id;
         Position = position;
@@ -46,7 +46,7 @@ public class Employee : BaseEntity
         AdmissionDate = employee.AdmissionDate;
         Position = employee.Position;
         PositionId = employee.PositionId;
-        RG = employee.RG;
+        CPF = employee.CPF;
         PhoneNumber = employee.PhoneNumber;
     }
 
@@ -64,7 +64,7 @@ public class Employee : BaseEntity
 public class EmployeeImportModel
 {
     public string Name { get; set; }
-    public string RG { get; set; }
+    public string CPF { get; set; }
     public string PositionName { get; set; }
     public DateTime AdmissionDate { get; set; }
 }

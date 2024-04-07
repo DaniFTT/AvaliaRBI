@@ -4,11 +4,7 @@ using AvaliaRBI._3___Domain.Abstractions;
 using AvaliaRBI._4___Repository;
 using AvaliaRBI.Shared.Extensions;
 using AvaliaRBI.Shared.Validation;
-using DocumentFormat.OpenXml.Drawing.Spreadsheet;
-using MudBlazor;
 using OfficeOpenXml;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.Globalization;
 using static AvaliaRBI._2___Application.Shared.Notification;
 
@@ -39,12 +35,12 @@ public class EmployeeService : BaseService<Employee>
         return await _repository.GetAllByAssessment(ids);
     }
 
-    public async Task<Employee> GetByRG(string rg)
+    public async Task<Employee> GetByCPF(string cpf)
     {
-        return await _repository.GetByRG(rg);
+        return await _repository.GetByCPF(cpf);
     }
 
-    string[] excelHeaders = { "Nome*", "RG*", "Cargo*", "Departamento", "Setor", "Data de Admissão*" };
+    string[] excelHeaders = { "Nome*", "CPF*", "Cargo*", "Departamento", "Setor", "Data de Admissão*" };
 
     ExcelField<EmployeeImportModel>[] HeaderFields = new ExcelField<EmployeeImportModel>[]  
     {
@@ -53,10 +49,10 @@ public class EmployeeService : BaseService<Employee>
             .WithMaxLengthRule(200)
             .SetAction((employee, value) => employee.Name = value),
 
-        new ExcelField<EmployeeImportModel>(2, "RG")
+        new ExcelField<EmployeeImportModel>(2, "CPF")
             .WithRequiredRule()
-            .WithRGRule()
-            .SetAction((employee, value) => employee.RG = value.NormalizeRG()),
+            .WithCPFRule()
+            .SetAction((employee, value) => employee.CPF = value.NormalizeCPF()),
 
         new ExcelField<EmployeeImportModel>(3, "Cargo")
             .WithRequiredRule()
@@ -103,7 +99,7 @@ public class EmployeeService : BaseService<Employee>
             {
                 currentRow++;
                 worksheet.Cells[currentRow, 1].Value = employee.Name;
-                worksheet.Cells[currentRow, 2].Value = employee.RG;
+                worksheet.Cells[currentRow, 2].Value = employee.CPF;
                 worksheet.Cells[currentRow, 3].Value = employee.Position.Name;
                 worksheet.Cells[currentRow, 4].Value = employee.Position.Department.Name;
                 worksheet.Cells[currentRow, 5].Value = employee.Position.Department.Sector.Name;
@@ -194,12 +190,12 @@ public class EmployeeService : BaseService<Employee>
                 if (importModel.ContainsErrorsByRow(row))
                     continue;
      
-                var employeeByRG = await GetByRG(employeeModel.RG);
-                if (employeeByRG != null)
+                var employeeByCPF = await GetByCPF(employeeModel.CPF);
+                if (employeeByCPF != null)
                 {
-                    employeeByRG.UpdateEmployee(employeeModel, position);
+                    employeeByCPF.UpdateEmployee(employeeModel, position);
 
-                    var updatedResult = await _repository.Update(employeeByRG.Id, employeeByRG);
+                    var updatedResult = await _repository.Update(employeeByCPF.Id, employeeByCPF);
                     if(updatedResult <= 0)
                     {
                         importModel.AddNota(worksheet.Name, row, "Ocorreu um erro ao atualizar esse funcionário, entre em contato com o suporte!");
@@ -210,7 +206,7 @@ public class EmployeeService : BaseService<Employee>
                     continue;
                 }      
 
-                var employee = new Employee(employeeModel.Name, employeeModel.RG, employeeModel.AdmissionDate, position);
+                var employee = new Employee(employeeModel.Name, employeeModel.CPF, employeeModel.AdmissionDate, position);
                 var insertedResult = await _repository.Insert(employee);
                 if(insertedResult <= 0)
                 {

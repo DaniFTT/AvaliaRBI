@@ -72,11 +72,11 @@ public class EmployeeRepository : BaseRepository<Employee>
         return await base.Delete(id);
     }
 
-    public async Task<Employee> GetByRG(string rg)
+    public async Task<Employee> GetByCPF(string cpf)
     {
         await SetUpDb();
 
-        return await _connection.Table<Employee>().FirstOrDefaultAsync(x => x.RG == rg);
+        return await _connection.Table<Employee>().FirstOrDefaultAsync(x => x.CPF == cpf);
     }
 }
 

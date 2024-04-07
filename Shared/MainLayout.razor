@@ -82,7 +82,10 @@
 
             
         </MudPopover>
-
+            @if (_isNotificationsPopoverOpen)
+            {
+                <MudOverlay Visible="_isNotificationsPopoverOpen" OnClick="CloseNotificationsPopover" DarkBackground="false" ZIndex="6" />
+            }
 
         </div>
         <div class="d-flex">
@@ -102,6 +105,10 @@
                 </MudList>
                 </MudPaper>
             </MudPopover>
+            @if (_isOptionsPopoverOpen)
+            {
+                <MudOverlay Visible="_isOptionsPopoverOpen" OnClick="CloseOptionsPopover" DarkBackground="false" ZIndex="7" />
+            }
         </div>
 @*        <MudSwitch @bind-Checked="@ThemeConstants._isDarkMode" Color="Color.Primary" Class="ml-2" T="bool" title="Modo Claro/Escuro" />
 *@
@@ -143,6 +150,17 @@
     private void ToggleOptions()
     {
         _isOptionsPopoverOpen = !_isOptionsPopoverOpen;
+    }
+
+    private void CloseOptionsPopover()
+    {
+        _isOptionsPopoverOpen = false;
+    }
+
+    private void CloseNotificationsPopover()
+    {
+        _isNotificationsPopoverOpen = false;
+        NotificationsService.UpdateNotificationsReaded();
     }
 
     protected override void OnInitialized()

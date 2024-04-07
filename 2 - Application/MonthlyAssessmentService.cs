@@ -137,7 +137,7 @@ public class MonthlyAssessmentService : BaseService<MonthlyAssessment>
 
                     importModel.ProcessedCount++;
 
-                    var employeeAssessment = assessmentModel.AssessmentEmployees.FirstOrDefault(a => a.Employee.RG.Trim().Equals(rgCell.ToString().Trim(), StringComparison.OrdinalIgnoreCase));
+                    var employeeAssessment = assessmentModel.AssessmentEmployees.FirstOrDefault(a => a.Employee.CPF.Trim().Equals(rgCell.ToString().Trim(), StringComparison.OrdinalIgnoreCase));
                     if (employeeAssessment == null)
                     {
                         importModel.AddNota(worksheet.Name, currentRow, $"Funcionário {employeeNameCell.ToString()} - {rgCell.ToString()} não encontrado na avaliação");
@@ -304,7 +304,7 @@ public class MonthlyAssessmentService : BaseService<MonthlyAssessment>
             var assessmentCriterias = assessmentModel.AssessmentAspects.SelectMany(a => a.Criteria).ToList();
 
             if (!assessmentModel.AssessmentAspects.Any() || !assessmentModel.Employees.Any())
-                return;
+                continue;
 
             var worksheetDepartment = package.Workbook.Worksheets.Add(departmentName);
             var totalColumns = assessmentCriterias.Count + (assessment.IsClosed ? 5 : 3);
@@ -356,7 +356,7 @@ public class MonthlyAssessmentService : BaseService<MonthlyAssessment>
             currentColumn++;
 
             var rgRange = worksheetDepartment.Cells[currentRow, currentColumn, currentRow, currentColumn];
-            rgRange.Value = "RG";
+            rgRange.Value = "CPF";
             rgRange.StyleName = "CustomTitle3";
             rgRange.Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Left;
             rgRange.Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Top;
@@ -402,7 +402,7 @@ public class MonthlyAssessmentService : BaseService<MonthlyAssessment>
                 currentColumn++;
 
                 var rgCriteriaRange = worksheetDepartment.Cells[currentRow, currentColumn, currentRow, currentColumn];
-                rgCriteriaRange.Value = employeeAssessment.Employee.RG;
+                rgCriteriaRange.Value = employeeAssessment.Employee.CPF;
                 rgCriteriaRange.StyleName = "CustomText";
                 currentColumn++;
 

@@ -35,7 +35,7 @@
     <DialogContent>
         <MudForm Model="@employee" @ref="@form" Validation="employeeValidator.ValidateValue" ValidationDelay="0" ReadOnly="isReadonly">
             <MudTextField T="string" @bind-Value="@employee.Name" For="@(() => employee.Name)" Label="Nome" Immediate="true" />
-            <MudTextField T="string" @bind-Value="@employee.RG" For="@(() => employee.RG)" Mask="@(new PatternMask("00.000.000-0"))" Label="RG" Immediate="true" />
+            <MudTextField T="string" @bind-Value="@employee.CPF" For="@(() => employee.CPF)" Mask="@(new PatternMask("000.000.000-00"))" Label="CPF" Immediate="true" />
 @*            <MudTextField T="string" @bind-Value="@employee.PhoneNumber" For="@(() => employee.PhoneNumber)" Mask="@(new PatternMask("(00) 0 0000-0000"))" Label="Número de Celular" Immediate="true" />
 *@            <MudDatePicker Label="Data de Admissão" Editable="true" @bind-Date="@employee.AdmissionDate" DisableToolbar="true" For="@(() => employee.AdmissionDate)" Mask="@(new DateMask("dd/MM/yyyy"))" DateFormat="dd/MM/yyyy" ErrorText="Data Inválida"/>
 
@@ -201,22 +201,22 @@
         {
             RuleFor(p => p.Name)
                 .NotEmpty().WithMessage("O Nome é obrigatório")
-                .MaximumLength(255).WithMessage("O Nome deve conter no máximo 150 caracteres");
+                .MaximumLength(200).WithMessage("O Nome deve conter no máximo 200 caracteres");
 
-            RuleFor(p => p.RG)
-                .NotEmpty().WithMessage("O RG é obrigatório")
-                .MinimumLength(12).WithMessage("O RG deve conter 12 caracteres")
-                .MaximumLength(12).WithMessage("O RG deve conter 12 caracteres");
+            RuleFor(p => p.CPF)
+                .NotEmpty().WithMessage("O CPF é obrigatório")
+                .MinimumLength(14).WithMessage("O CPF deve conter no minimo 14 caracteres")
+                .MaximumLength(14).WithMessage("O CPF deve conter no máximo 14 caracteres");
 
-            RuleFor(p => p.RG).MustAsync(async (currentEmployee, rg, context) =>
+            RuleFor(p => p.CPF).MustAsync(async (currentEmployee, cpf, context) =>
             {
-                var employee = await employeeService.GetByRG(rg);
+                var employee = await employeeService.GetByCPF(cpf);
                 return !(employee != null && employee.Id != currentEmployee.Id);
-            }).WithMessage("Já existe um funcionário cadastrado com este RG.");
+            }).WithMessage("Já existe um funcionário cadastrado com este CPF.");
 
-            RuleFor(p => p.PhoneNumber)
-                .MinimumLength(16).When(p => !string.IsNullOrEmpty(p.PhoneNumber)).WithMessage("O Número de Celular deve conter 16 caracteres")
-                .MaximumLength(16).When(p => !string.IsNullOrEmpty(p.PhoneNumber)).WithMessage("O Número de Celular deve conter 16 caracteres");
+            //RuleFor(p => p.PhoneNumber)
+            //    .MinimumLength(16).When(p => !string.IsNullOrEmpty(p.PhoneNumber)).WithMessage("O Número de Celular deve conter 16 caracteres")
+            //    .MaximumLength(16).When(p => !string.IsNullOrEmpty(p.PhoneNumber)).WithMessage("O Número de Celular deve conter 16 caracteres");
 
             RuleFor(p => p.AdmissionDate)   
                 .NotNull().WithMessage("A Data de Admissão é obrigatório")

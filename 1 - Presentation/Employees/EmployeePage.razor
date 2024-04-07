@@ -11,6 +11,7 @@
 @using AvaliaRBI._3___Domain.Models;
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
 
 <ResetDbComponent OnRestDb="ResetDb" Name="Employee" />
 
@@ -69,11 +70,28 @@
                     Funcionários
                 </MudText>
                 <MudSpacer />
+                <div class="d-flex" style="margin-right: 1rem;">
+                    <MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" @onclick="ToggleOptions" />
+                    <MudPopover OverflowBehavior="OverflowBehavior.FlipNever" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopRight" Open="_isOptionsPopoverOpen" MaxHeight="300" Class="overflow-y-auto">
+                        <MudPaper Style="max-height: 300px" Class="overflow-y-auto">
+                            <MudList Class="notification-list" Dense="true" Clickable="true">
+                                <MudListItem OnClick="() => ResetEmployeesData()">
+                                    Excluir todos os funcionários
+                                </MudListItem>
+                            </MudList>
+                        </MudPaper>
+                    </MudPopover>
+
+                    @if (_isOptionsPopoverOpen)
+                    {
+                        <MudOverlay Visible="_isOptionsPopoverOpen" OnClick="ClosePopover" DarkBackground="false" ZIndex="5" />
+                    }
+                </div>
             </ToolBarContent>
 
             <Columns>
                 <PropertyColumn Property="x => x.Name" Title="Nome" Hidden="false" Groupable="true" Sortable="true" Filterable="true" Comparer="new MudBlazor.Utilities.NaturalComparer()" />
-                <PropertyColumn Property="x => x.RG" Title="RG" Hidden="false" Groupable="true" Sortable="true" Filterable="true" Comparer="new MudBlazor.Utilities.NaturalComparer()" />
+                <PropertyColumn Property="x => x.CPF" Title="CPF" Hidden="false" Groupable="true" Sortable="true" Filterable="true" Comparer="new MudBlazor.Utilities.NaturalComparer()" />
                 <PropertyColumn Property="x => x.AdmissionDate.Value.ToShortDateString()" Title="Admissão" Hidden="false" Groupable="true" Sortable="true" Filterable="true" Comparer="new MudBlazor.Utilities.NaturalComparer()" />
                 <PropertyColumn Property="x => x.Position.Name" Title="Cargo" Hidden="false" Groupable="true" Sortable="true" Filterable="true" Comparer="new MudBlazor.Utilities.NaturalComparer()" />
                 <PropertyColumn Property="x => x.Position.Department.Name" Title="Departamento" Hidden="false" Groupable="true" Sortable="true" Filterable="true" Comparer="new MudBlazor.Utilities.NaturalComparer()" />
@@ -104,6 +122,17 @@
     public EmployeeService EmployeeService { get; set; }
 
     private List<Employee> employees;
+    private bool _isOptionsPopoverOpen = false;
+
+    private void ToggleOptions()
+    {
+        _isOptionsPopoverOpen = !_isOptionsPopoverOpen;
+    }
+
+    private void ClosePopover()
+    {
+        _isOptionsPopoverOpen = false;
+    }
 
     async Task ResetDb()
     {
@@ -143,6 +172,21 @@
     public DialogOptions GetDialogOptions()
     {
         return new DialogOptions() { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+    }
+
+    private async Task ResetEmployeesData()
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Aviso",
+            "Tem certeza que deseja excluir todos os funcionários?",
+            yesText: "Sim", cancelText: "Cancelar");
+
+        if (result == null)
+            return;
+
+        await ResetDb();
+
+        ClosePopover();
     }
 
     private async Task SeeEmployeeDetails(int employeeId)

@@ -35,24 +35,18 @@ public static class StringExtensions
         return fullPath;
     }
 
-    public static string NormalizeRG(this string value)
+    public static string NormalizeCPF(this string value)
     {
-        var regexUnformatted = new Regex(@"^(\d{2})(\d{3})(\d{3})(\d{1})$");
-        var regexFormatted = new Regex(@"^\d{2}\.\d{3}\.\d{3}-\d{1}$");
+        var regexUnformatted = new Regex(@"^(\d{3})(\d{3})(\d{3})(\d{2})$");
+        var regexFormatted = new Regex(@"^\d{3}\.\d{3}\.\d{3}-\d{2}$");
 
         if (regexFormatted.IsMatch(value))
-        {
-            return value;
-        }
-        else if (regexUnformatted.IsMatch(value))
-        {
-            return regexUnformatted.Replace(value, @"$1.$2.$3-$4");
-        }
+            return value;      
+        else if (regexUnformatted.IsMatch(value))      
+            return regexUnformatted.Replace(value, @"$1.$2.$3-$4");       
         else
-        {
             return string.Empty;
-        }
-
+        
     }
 
     public static string GetFormatedDate(this DateTime date)

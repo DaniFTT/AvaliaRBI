@@ -183,6 +183,15 @@
                                             Não há nenhum Funcionário Do Departamento @(department.Name) cadastrado ou admitido antes dessa Competência...
                                             </MudText>
                                         }
+                                    else if(!assessmentModel.AssessmentAspects.Any())
+                                    {
+                                            <MudText Typo="Typo.body1" Style="padding-bottom: 0;font-size: 0.9rem;font-weight: 400;">
+                                                Nenhum Aspecto de Avaliação Encontrado!
+                                            </MudText>
+                                            <MudText Typo="Typo.caption" Style="margin-bottom: 2rem; font-size: 0.7rem;">
+                                                Não há nenhum Aspecto de Avaliação para Departamento @(department.Name)... Vá a tela de Critérios de Avaliação para cadastrar!
+                                            </MudText>
+                                    }
                                     else
                                     {
                                         @if (!IsReadonly)
@@ -203,119 +212,108 @@
 
                                         <MudTabs PanelClass="px-4 pb-4 pt-4" Elevation="2" Rounded ApplyEffectsToContainer Style="margin-top: 1rem">
 
-                                            
-                                            @if(!assessmentModel.AssessmentAspects.Any())
+
+                                            @for (int j = 0; j < assessmentModel.AssessmentAspects.Count; j++)
                                             {
-                                                <MudText Typo="Typo.body1" Style="padding-bottom: 0;font-size: 0.9rem;font-weight: 400;">
-                                                    Nenhum Aspecto de Avaliação Encontrado!
-                                                </MudText>
-                                                <MudText Typo="Typo.caption" Style="margin-bottom: 2rem; font-size: 0.7rem;">
-                                                    Não há nenhum Aspecto de Avaliação para Departamento @(department.Name)... Vá a tela de Critérios de Avaliação para cadastrar!
-                                                    </MudText>
-                                            }
-                                            else
-                                            {
-                                                @for (int j = 0; j < assessmentModel.AssessmentAspects.Count; j++)
-                                                {
-                                                    var aspect = assessmentModel.AssessmentAspects[j];
+                                                var aspect = assessmentModel.AssessmentAspects[j];
 
-                                                    <MudTabPanel Text="@aspect.Name">
+                                                <MudTabPanel Text="@aspect.Name">
 
-                                                        @for (int k = 0; k < employees.Count; k++)
-                                                        {
-                                                            var employment = employees[k];
-                                                            var assessmentEmployee = assessmentModel.AssessmentEmployees.FirstOrDefault(a => a.EmployeeId == employment.Id);
+                                                    @for (int k = 0; k < employees.Count; k++)
+                                                    {
+                                                        var employment = employees[k];
+                                                        var assessmentEmployee = assessmentModel.AssessmentEmployees.FirstOrDefault(a => a.EmployeeId == employment.Id);
 
-                                                            <div class="d-flex" style="gap: 1rem; margin-bottom: 2rem;">
+                                                        <div class="d-flex" style="gap: 1rem; margin-bottom: 2rem;">
 
-                                                                <div style="width: 2%;
-                                                                    text-align: center;   
-                                                                    align-self: center;
-                                                                    padding-bottom: 1rem;
-                                                                ">
-                                                                    <MudIconButton Color="Color.Primary" Size="@Size.Small" Title="Resultado" Icon="@Icons.Material.Filled.FileOpen" OnClick="() => SeeAssessmentEmployeeDetails(employment)" />
+                                                            <div style="width: 2%;
+                                                                text-align: center;   
+                                                                align-self: center;
+                                                                padding-bottom: 1rem;
+                                                            ">
+                                                                <MudIconButton Color="Color.Primary" Size="@Size.Small" Title="Resultado" Icon="@Icons.Material.Filled.FileOpen" OnClick="() => SeeAssessmentEmployeeDetails(employment)" />
+                                                            </div>
+
+
+                                                                <div style="max-width: 12%;min-width: 12%;">
+                                                                    <MudText title="Funcionário" Typo="Typo.body2" Style="font-size: 0.8rem; padding-top: 0.1rem;" Class="ellipsis">
+                                                                    Funcionário
+                                                                </MudText>
+                                                                    <MudText title="@employment.Name" Typo="Typo.body1" Style="font-size: 0.8rem; font-weight: 500;padding-top: 0.4rem;" Class="ellipsis">
+                                                                    @employment.Name
+                                                                </MudText>
+                                                                <div style="height: 1px; border-bottom: 1.5px solid #737379; padding-top: 0.1rem;">
                                                                 </div>
+                                                            </div>
+                                                                <div style="max-width: 8%;min-width: 8%;">
+                                                                    <MudText title="CPF" Typo="Typo.body2" Style="font-size: 0.8rem; padding-top: 0.1rem;" Class="ellipsis">
+                                                                    CPF
+                                                                </MudText>
+                                                                    <MudText title="@employment.CPF" Typo="Typo.body1" Style="font-size: 0.8rem; font-weight: 500;padding-top: 0.4rem;" Class="ellipsis">
+                                                                    @employment.CPF
+                                                                </MudText>
+                                                                <div style="height: 1px; border-bottom: 1.5px solid #737379; padding-top: 0.1rem;">
+                                                                </div>
+                                                            </div>
 
-
-                                                                    <div style="max-width: 12%;min-width: 12%;">
-                                                                        <MudText title="Funcionário" Typo="Typo.body2" Style="font-size: 0.8rem; padding-top: 0.1rem;" Class="ellipsis">
-                                                                        Funcionário
-                                                                    </MudText>
-                                                                        <MudText title="@employment.Name" Typo="Typo.body1" Style="font-size: 0.8rem; font-weight: 500;padding-top: 0.4rem;" Class="ellipsis">
-                                                                        @employment.Name
-                                                                    </MudText>
+                                                                <div style="max-width: 8%;min-width: 8%;">
+                                                                    <MudText title="Admissão" Typo="Typo.body2" Style="font-size: 0.8rem; padding-top: 0.1rem" Class="ellipsis">
+                                                                    Admissão
+                                                                </MudText>
+                                                                    <MudText title="@(employment.AdmissionDate.Value.ToString("dd/MM/yyyy"))" Typo="Typo.body1" Style="font-size: 0.8rem; font-weight: 500;padding-top: 0.4rem;" Class="ellipsis">
+                                                                    @(employment.AdmissionDate.Value.ToString("dd/MM/yyyy"))
+                                                                </MudText>
                                                                     <div style="height: 1px; border-bottom: 1.5px solid #737379; padding-top: 0.1rem;">
-                                                                    </div>
-                                                                </div>
-                                                                    <div style="max-width: 8%;min-width: 8%;">
-                                                                        <MudText title="RG" Typo="Typo.body2" Style="font-size: 0.8rem; padding-top: 0.1rem;" Class="ellipsis">
-                                                                        RG
-                                                                    </MudText>
-                                                                        <MudText title="@employment.RG" Typo="Typo.body1" Style="font-size: 0.8rem; font-weight: 500;padding-top: 0.4rem;" Class="ellipsis">
-                                                                        @employment.RG
-                                                                    </MudText>
-                                                                    <div style="height: 1px; border-bottom: 1.5px solid #737379; padding-top: 0.1rem;">
-                                                                    </div>
-                                                                </div>
-
-                                                                    <div style="max-width: 8%;min-width: 8%;">
-                                                                        <MudText title="Admissão" Typo="Typo.body2" Style="font-size: 0.8rem; padding-top: 0.1rem" Class="ellipsis">
-                                                                        Admissão
-                                                                    </MudText>
-                                                                        <MudText title="@(employment.AdmissionDate.Value.ToString("dd/MM/yyyy"))" Typo="Typo.body1" Style="font-size: 0.8rem; font-weight: 500;padding-top: 0.4rem;" Class="ellipsis">
-                                                                        @(employment.AdmissionDate.Value.ToString("dd/MM/yyyy"))
-                                                                    </MudText>
-                                                                        <div style="height: 1px; border-bottom: 1.5px solid #737379; padding-top: 0.1rem;">
-                                                                        </div>
-                                                                </div>
-
-                                                                    <div style="display: flex;
-                                                                    gap: 1rem;
-                                                                    max-width: 75%;
-                                                                    width: 75%;
-                                                                    overflow-x: auto;">
-
-
-                                                                @for (int l = 0; l < aspect.Criteria.Count(); l++)
-                                                                {
-                                                                    var currentlyAspect = assessmentEmployee.AssessmentCollections.SelectMany(c => c.AssessmentAspects).FirstOrDefault(a => a.Id == aspect.Id);
-                                                                    var currentlyCriteria = currentlyAspect.Criteria[l];
-                                                                    var criteriaType = currentlyCriteria.CriteriaType;
-
-                                                                    if (criteriaType == CriteriaType.Integer)
-                                                                    {
-                                                                        <div class="limitValueField">
-                                                                            <MudNumericField Style="width: fit-content" @bind-Value="@currentlyCriteria.ValueCriteria.ValueInt" Label="@currentlyCriteria.Name" HelperText="@($"{currentlyCriteria.GetValue()}/{currentlyCriteria.GetLimitValue()}   {(currentlyCriteria.IsPositive ? "(+)" : "(-)")}")" ErrorText="Valor Inválido" Variant="Variant.Text" Min="0" Margin="Margin.Dense" Immediate="true" />
-                                                                        </div>
-                                                                    }
-                                                                    else if (criteriaType == CriteriaType.Decimal)
-                                                                    {
-                                                                                                                                                <div class="limitValueField">
-
-                                                                        <MudNumericField Style="width: fit-content" @bind-Value="@currentlyCriteria.ValueCriteria.ValueDecimal" Label="@currentlyCriteria.Name" HelperText="@($"{currentlyCriteria.GetValue()}/{currentlyCriteria.GetLimitValue()}   {(currentlyCriteria.IsPositive ? "(+)" : "(-)")}")" Format="F2" ErrorText="Valor Inválido" Margin="Margin.Dense" Immediate="true" />
-                                                                    </div>
-                                                                    }
-                                                                    else if (criteriaType == CriteriaType.Percentage)
-                                                                    {
-                                                                                                                                                <div class="limitValueField">
-
-                                                                        <MudNumericField Style="width: fit-content" @bind-Value="@currentlyCriteria.ValueCriteria.ValuePercentage" Label="@currentlyCriteria.Name" HelperText="@($"{currentlyCriteria.GetValue()}/{currentlyCriteria.GetLimitValue()}   {(currentlyCriteria.IsPositive ? "(+)" : "(-)")}")" Format="F2" Adornment="Adornment.End" AdornmentText="%" Margin="Margin.Dense" Immediate="true" />
-                                                                    </div>
-                                                                    }
-                                                                    else if (criteriaType == CriteriaType.Time)
-                                                                    {
-                                                                                                                                                <div class="limitValueField">
-
-                                                                        <MudTextField Style="width: fit-content" @bind-Value="@currentlyCriteria.ValueCriteria.ValueTime" Label="@currentlyCriteria.Name" HelperText="@($"{currentlyCriteria.GetValue()}/{currentlyCriteria.GetLimitValue()}   {(currentlyCriteria.IsPositive ? "(+)" : "(-)")}")" Mask="@(new PatternMask("00:00"))" Margin="Margin.Dense" Validation="@(new Func<string, IEnumerable<string>>(ValidateValue))" Immediate="true" />
-                                                                    </div>
-                                                                    }
-                                                                }
                                                                     </div>
                                                             </div>
-                                                        }
-                                                    </MudTabPanel>
-                                                }
-                                            }        
+
+                                                                <div style="display: flex;
+                                                                gap: 1rem;
+                                                                max-width: 75%;
+                                                                width: 75%;
+                                                                overflow-x: auto;">
+
+
+                                                            @for (int l = 0; l < aspect.Criteria.Count(); l++)
+                                                            {
+                                                                var currentlyAspect = assessmentEmployee.AssessmentCollections.SelectMany(c => c.AssessmentAspects).FirstOrDefault(a => a.Id == aspect.Id);
+                                                                var currentlyCriteria = currentlyAspect.Criteria[l];
+                                                                var criteriaType = currentlyCriteria.CriteriaType;
+
+                                                                if (criteriaType == CriteriaType.Integer)
+                                                                {
+                                                                    <div class="limitValueField">
+                                                                        <MudNumericField Style="width: fit-content" @bind-Value="@currentlyCriteria.ValueCriteria.ValueInt" Label="@currentlyCriteria.Name" HelperText="@($"{currentlyCriteria.GetValue()}/{currentlyCriteria.GetLimitValue()}   {(currentlyCriteria.IsPositive ? "(+)" : "(-)")}")" ErrorText="Valor Inválido" Variant="Variant.Text" Min="0" Margin="Margin.Dense" Immediate="true" />
+                                                                    </div>
+                                                                }
+                                                                else if (criteriaType == CriteriaType.Decimal)
+                                                                {
+                                                                                                                                            <div class="limitValueField">
+
+                                                                    <MudNumericField Style="width: fit-content" @bind-Value="@currentlyCriteria.ValueCriteria.ValueDecimal" Label="@currentlyCriteria.Name" HelperText="@($"{currentlyCriteria.GetValue()}/{currentlyCriteria.GetLimitValue()}   {(currentlyCriteria.IsPositive ? "(+)" : "(-)")}")" Format="F2" ErrorText="Valor Inválido" Margin="Margin.Dense" Immediate="true" />
+                                                                </div>
+                                                                }
+                                                                else if (criteriaType == CriteriaType.Percentage)
+                                                                {
+                                                                                                                                            <div class="limitValueField">
+
+                                                                    <MudNumericField Style="width: fit-content" @bind-Value="@currentlyCriteria.ValueCriteria.ValuePercentage" Label="@currentlyCriteria.Name" HelperText="@($"{currentlyCriteria.GetValue()}/{currentlyCriteria.GetLimitValue()}   {(currentlyCriteria.IsPositive ? "(+)" : "(-)")}")" Format="F2" Adornment="Adornment.End" AdornmentText="%" Margin="Margin.Dense" Immediate="true" />
+                                                                </div>
+                                                                }
+                                                                else if (criteriaType == CriteriaType.Time)
+                                                                {
+                                                                                                                                            <div class="limitValueField">
+
+                                                                    <MudTextField Style="width: fit-content" @bind-Value="@currentlyCriteria.ValueCriteria.ValueTime" Label="@currentlyCriteria.Name" HelperText="@($"{currentlyCriteria.GetValue()}/{currentlyCriteria.GetLimitValue()}   {(currentlyCriteria.IsPositive ? "(+)" : "(-)")}")" Mask="@(new PatternMask("00:00"))" Margin="Margin.Dense" Validation="@(new Func<string, IEnumerable<string>>(ValidateValue))" Immediate="true" />
+                                                                </div>
+                                                                }
+                                                            }
+                                                                </div>
+                                                        </div>
+                                                    }
+                                                </MudTabPanel>
+                                            }
+                                                    
                                         </MudTabs>                
                                     }                
                                 </div>    
