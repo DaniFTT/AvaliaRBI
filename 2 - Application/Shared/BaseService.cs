@@ -1,6 +1,5 @@
 ﻿using Ardalis.Result;
 using AvaliaRBI._2___Application.Shared;
-using Newtonsoft.Json;
 
 namespace AvaliaRBI._3___Domain.Abstractions
 {
@@ -85,7 +84,7 @@ namespace AvaliaRBI._3___Domain.Abstractions
 
                 if (result == 1)
                     return Result.Success();
-                else if(result == -1)
+                else if (result == -1)
                     return Result.Error("Não é possível deletar esse registro, poís ele possui dependências!");
 
                 return Result.Error("Não foi possível deletar esse registro!");

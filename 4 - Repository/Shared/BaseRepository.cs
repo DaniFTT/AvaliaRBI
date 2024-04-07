@@ -1,6 +1,4 @@
 ﻿using AvaliaRBI._3___Domain.Abstractions;
-using AvaliaRBI.Shared.Extensions;
-using MudBlazor;
 using SQLite;
 
 namespace AvaliaRBI._4___Repository;

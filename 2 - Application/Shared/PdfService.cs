@@ -4,16 +4,12 @@ using AvaliaRBI._3___Domain.Models;
 using AvaliaRBI.Shared.Extensions;
 using BlazorTemplater;
 using iText.Html2pdf;
-using iText.IO.Font.Constants;
-using iText.Kernel.Colors;
 using iText.Kernel.Events;
-using iText.Kernel.Font;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
 using iText.Layout;
 using iText.Layout.Element;
-using iText.StyledXmlParser.Jsoup.Nodes;
 using Microsoft.Extensions.Logging;
 using System.IO.Compression;
 

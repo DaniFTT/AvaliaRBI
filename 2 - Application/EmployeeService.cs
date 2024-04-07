@@ -42,7 +42,7 @@ public class EmployeeService : BaseService<Employee>
 
     string[] excelHeaders = { "Nome*", "CPF*", "Cargo*", "Departamento", "Setor", "Data de Admissão*" };
 
-    ExcelField<EmployeeImportModel>[] HeaderFields = new ExcelField<EmployeeImportModel>[]  
+    ExcelField<EmployeeImportModel>[] HeaderFields = new ExcelField<EmployeeImportModel>[]
     {
         new ExcelField<EmployeeImportModel>(1, "Nome")
             .WithRequiredRule()
@@ -169,7 +169,7 @@ public class EmployeeService : BaseService<Employee>
 
             var employeeModel = new EmployeeImportModel();
             for (int row = startRow; row <= totalRows; row++)
-            {           
+            {
                 importModel.ProcessedCount++;
                 _notificationsService.UpdateProgressNotification(notification, (row - 1));
 
@@ -185,18 +185,18 @@ public class EmployeeService : BaseService<Employee>
 
                 var position = positions.FirstOrDefault(p => employeeModel.PositionName.Equals(p.Name, StringComparison.OrdinalIgnoreCase));
                 if (position == null)
-                    importModel.AddNota(worksheet.Name,row, "O Cargo informado não foi encontrado!");
+                    importModel.AddNota(worksheet.Name, row, "O Cargo informado não foi encontrado!");
 
                 if (importModel.ContainsErrorsByRow(row))
                     continue;
-     
+
                 var employeeByCPF = await GetByCPF(employeeModel.CPF);
                 if (employeeByCPF != null)
                 {
                     employeeByCPF.UpdateEmployee(employeeModel, position);
 
                     var updatedResult = await _repository.Update(employeeByCPF.Id, employeeByCPF);
-                    if(updatedResult <= 0)
+                    if (updatedResult <= 0)
                     {
                         importModel.AddNota(worksheet.Name, row, "Ocorreu um erro ao atualizar esse funcionário, entre em contato com o suporte!");
                         continue;
@@ -204,11 +204,11 @@ public class EmployeeService : BaseService<Employee>
 
                     importModel.UpdatedCount++;
                     continue;
-                }      
+                }
 
                 var employee = new Employee(employeeModel.Name, employeeModel.CPF, employeeModel.AdmissionDate, position);
                 var insertedResult = await _repository.Insert(employee);
-                if(insertedResult <= 0)
+                if (insertedResult <= 0)
                 {
                     importModel.AddNota(worksheet.Name, row, "Ocorreu um erro ao inserir esse funcionário, entre em contato com o suporte!");
                     continue;
@@ -219,11 +219,11 @@ public class EmployeeService : BaseService<Employee>
 
             _notificationsService.RemoveNotification(notification);
 
-            importModel.Title = importModel.ContainsErrors ? "Não foi possível inserir todos os funcionários. Verifique os detalhes da Importação!" : 
+            importModel.Title = importModel.ContainsErrors ? "Não foi possível inserir todos os funcionários. Verifique os detalhes da Importação!" :
                 "Importação de Funcionários Realizada com Sucesso! Veja os detalhes";
-    
+
             var notificationImport = new Notification(importModel);
-           _notificationsService.AddNotification(notificationImport);
+            _notificationsService.AddNotification(notificationImport);
         }
         catch (Exception ex)
         {

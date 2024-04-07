@@ -5,9 +5,6 @@ using AvaliaRBI._3___Domain.Abstractions;
 using AvaliaRBI._3___Domain.Models;
 using AvaliaRBI._4___Repository;
 using AvaliaRBI.Shared.Extensions;
-using DocumentFormat.OpenXml.Spreadsheet;
-using DocumentFormat.OpenXml.Wordprocessing;
-using Microsoft.IdentityModel.Tokens;
 using OfficeOpenXml;
 using static AvaliaRBI._2___Application.Shared.Notification;
 
@@ -328,7 +325,7 @@ public class MonthlyAssessmentService : BaseService<MonthlyAssessment>
 
             foreach (var assessmentAspect in assessmentModel.AssessmentAspects)
             {
-                var assessmentAspectRange = worksheetDepartment.Cells[currentRow, currentColumn, currentRow, currentColumn + (assessmentAspect.Criteria.Count-1)];
+                var assessmentAspectRange = worksheetDepartment.Cells[currentRow, currentColumn, currentRow, currentColumn + (assessmentAspect.Criteria.Count - 1)];
                 assessmentAspectRange.Merge = true;
                 assessmentAspectRange.Value = assessmentAspect.Name;
                 assessmentAspectRange.StyleName = "CustomTitle2";
@@ -423,7 +420,7 @@ public class MonthlyAssessmentService : BaseService<MonthlyAssessment>
                     {
                         case CriteriaType.Integer:
                             criteriaRange.Value = criteria.ValueCriteria.ValueInt;
-                            criteriaRange.Style.Numberformat.Format = "0"; 
+                            criteriaRange.Style.Numberformat.Format = "0";
                             break;
                         case CriteriaType.Decimal:
                             criteriaRange.Value = criteria.ValueCriteria.ValueDecimal;
@@ -477,7 +474,7 @@ public class MonthlyAssessmentService : BaseService<MonthlyAssessment>
             table.ShowFilter = true;
             table.TableStyle = OfficeOpenXml.Table.TableStyles.Light9;
 
-            if(assessment.IsClosed)
+            if (assessment.IsClosed)
             {
                 table.ShowTotal = true;
                 worksheetDepartment.Cells[table.Address.End.Row, startColumn].Value = "Média Total";
@@ -537,7 +534,7 @@ public class MonthlyAssessmentService : BaseService<MonthlyAssessment>
 
         worksheet.Cells["B4:L4"].Merge = true;
         worksheet.Cells["B4:L4"].Value = string.IsNullOrEmpty(assessment.Description) ? (assessment.IsClosed ? assessment.GetConfirmationMessage() : assessment.GetScratchMessage()) : assessment.Description;
-        worksheet.Cells["B4:L4"].Style.WrapText = true; 
+        worksheet.Cells["B4:L4"].Style.WrapText = true;
         worksheet.Cells["B4:L4"].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Left;
         worksheet.Cells["B4:L4"].Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Top;
 
@@ -595,7 +592,7 @@ public class MonthlyAssessmentService : BaseService<MonthlyAssessment>
         title2Style.Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
         title2Style.Style.Border.Right.Color.SetColor(lightBlue);
         title2Style.Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
-        title2Style.Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Center;      
+        title2Style.Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Center;
 
         var title3Style = worksheet.Workbook.Styles.CreateNamedStyle("CustomTitle3");
         title3Style.Style.Font.SetFromFont("Aptos Narrow", 11, bold: true);

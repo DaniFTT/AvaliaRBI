@@ -1,14 +1,7 @@
 ﻿using AvaliaRBI.Shared.Extensions;
 using DocumentFormat.OpenXml;
-using DocumentFormat.OpenXml.Wordprocessing;
-using Microsoft.IdentityModel.Tokens;
 using OfficeOpenXml;
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static AvaliaRBI._2___Application.Shared.Notification;
 
 namespace AvaliaRBI.Shared.Validation;
@@ -78,7 +71,7 @@ public class ExcelField<T> where T : class
             return;
         }
 
-        importModel.AddNota(worksheet, row, validationResult.ErrorMessage);  
+        importModel.AddNota(worksheet, row, validationResult.ErrorMessage);
     }
 }
 
@@ -176,7 +169,7 @@ public class NotFutureDateValidationRule : IValidationRule<string>
         validationResult.IsValid = DateTime
             .TryParseExact(value, "dd/MM/yyyy", CultureInfo.GetCultureInfo("pt-BR"), DateTimeStyles.AssumeLocal, out var date);
 
-        if(!validationResult.IsValid)
+        if (!validationResult.IsValid)
         {
             validationResult.ErrorMessage = $" {fieldName} está inválida. A data deve ser no formato dd/mm/yyyy";
             return validationResult;

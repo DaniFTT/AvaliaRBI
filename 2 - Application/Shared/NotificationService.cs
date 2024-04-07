@@ -1,7 +1,6 @@
 ﻿using MudBlazor;
 using Newtonsoft.Json;
 using System.ComponentModel;
-using System.Text.Json.Serialization;
 using static AvaliaRBI._2___Application.Shared.Notification;
 
 namespace AvaliaRBI._2___Application.Shared;
@@ -48,14 +47,14 @@ public class NotificationsService
                 {
                     var notification = new Notification { DateTime = dateTime, Message = parts[1], Readed = parts[2] == "true" ? true : false, Type = (NotificationType)(int.Parse(parts[3])) };
 
-                    if(parts.Length == 5)
+                    if (parts.Length == 5)
                     {
                         notification.ImportModel = JsonConvert.DeserializeObject<ImportNotificationModel>(parts[4]);
                     }
 
                     Notifications.Add(notification);
                 }
-                
+
             }
         }
     }
@@ -163,8 +162,8 @@ public class Notification
         Type = NotificationType.Success;
 
         if (importModel.Notas.Any(c => c.Type == NotaType.Error))
-            Type = NotificationType.Error;    
-    }   
+            Type = NotificationType.Error;
+    }
 
     public Notification()
     {
@@ -266,7 +265,7 @@ public class Notification
 
         public ImportNotificationModel()
         {
-            
+
         }
 
         public ImportNotificationModel(string fileName)
@@ -276,7 +275,7 @@ public class Notification
 
         public bool ContainsErrors { get => Notas.Any(n => n.Type == NotaType.Error); }
         public bool ContainsErrorsByRow(int row) => Notas.Any(n => n.Row == row.ToString() && n.Type == NotaType.Error);
-        public bool ContainsWarnings{ get => Notas.Any(n => n.Type == NotaType.Warning); }
+        public bool ContainsWarnings { get => Notas.Any(n => n.Type == NotaType.Warning); }
     }
     public class NotaModel
     {
@@ -302,7 +301,7 @@ public class Notification
 
         public NotaModel()
         {
-            
+
         }
     }
     public enum NotaType

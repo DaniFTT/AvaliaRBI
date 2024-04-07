@@ -1,13 +1,6 @@
 ﻿using AvaliaRBI._3___Domain;
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Twilio.Rest.Api.V2010.Account.Usage.Record;
-using static iText.IO.Codec.TiffWriter;
 
 namespace AvaliaRBI.Shared.Extensions;
 
@@ -41,12 +34,12 @@ public static class StringExtensions
         var regexFormatted = new Regex(@"^\d{3}\.\d{3}\.\d{3}-\d{2}$");
 
         if (regexFormatted.IsMatch(value))
-            return value;      
-        else if (regexUnformatted.IsMatch(value))      
-            return regexUnformatted.Replace(value, @"$1.$2.$3-$4");       
+            return value;
+        else if (regexUnformatted.IsMatch(value))
+            return regexUnformatted.Replace(value, @"$1.$2.$3-$4");
         else
             return string.Empty;
-        
+
     }
 
     public static string GetFormatedDate(this DateTime date)

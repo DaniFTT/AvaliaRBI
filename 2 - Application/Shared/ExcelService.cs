@@ -1,11 +1,5 @@
 ﻿using AvaliaRBI._3___Domain.Models;
 using AvaliaRBI.Shared.Extensions;
-using MimeKit.Text;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AvaliaRBI._2___Application.Shared;
 
